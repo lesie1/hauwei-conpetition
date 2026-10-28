@@ -1,0 +1,1424 @@
+--- v2/README_V3_中文.md
++++ v3/README_V3_中文.md
+@@ -0,0 +1,60 @@
++# v3：误报与漏报双向诊断的设备故障实验框架
++
++本包基于本地 `autodl_v2/runtime` 的2026-10-28版本开发。它是独立交付版本；旧代码、会话、模型与服务器任务保持原状。改过程序或表示后必须建立新会话，不能重写旧会话的 code_seal。
++
++## 本次实现
++
++1. **误报与漏报分开诊断**：保留 `high_score_contrast`，增加 `missed_fault_contrast` 和 `error_atlas`。后者同时输出 TP/FP 与 FN/TN 的探索性特征对比，以及没有及时预测时刻、有时刻但没有分数、有分数但低于阈值的漏报数量。窗口外告警单列为重叠计数，不把这些类别错误相加。
++2. **双向预筛与有限探索**：默认 balanced，任一对比发现单变量信号就可训练；没有信号时，分析 Agent 可提交带 hypothesis_id 的 features 请求，用 exploration_reason 解释组合效应、召回或数据覆盖问题，申请有限探索名额（默认整个会话2次）。名额持久化，恢复不会重复扣除。strict_high 保留为原规则对照。诊断不显著不等于证明无效。
++3. **独立补充分支**：新增 `rerank=parallel`，单阶段父模型固定；第二分支对固定采样规则保留的所有训练行学习，不受父模型分数门限限制。第二分支采用设备权重总和为1、平方根类别权重、深度2的XGBoost；逐行分数取两分支最大值，再走原预测时间表、聚合与评分。它可以提起父模型低分，但也可能新增误报，仍须通过采纳检验。它是通用的组合模型实验，**不是完整M²-MFP，也不是论文的DIMM-centric规则树**；输入是现有数值观测行，可能已经过时间汇总。
++4. **设备权重单因素对照**：scope默认开放 base_weight，仅改权重可单独检验设备日志数量偏差。parallel同时改变结构和权重，其收益不能全部归功于某一个因素。
++5. **可选内存结构适配器**：`raw_spatial_v3.py` 保留v1原始特征，增加15分钟/1小时统计、事件形状摘要、按deviceID区分的芯片内位置数量、比特信息可用计数。原有逻辑地址统计不改名、不改义。通过 `--representation spatial_v3` 新建缓存才能启用；没有原始日志的设备保持缺失。它不是完整Multi-BSFE。其他领域使用自己的字段适配，通用控制器不假设硬盘有DQ/bank。
++6. **重复设备的统计处理**：诊断区间与CV配对区间按设备整体重采样，将同一设备的各时间段放在一起。CV仍用于搜索和挑选阈值/步数，结果是探索证据，不能冒充独立测试显著性。
++7. **提示真正进入Agent调用**：包内 skill、共享 experiment-method.md、analysis/feature提示词已同步；providers.py每次向三个角色注入同一份共享方法。分析Agent收到合法动作、双向诊断、剩余探索名额、误报/漏报计数；特征Agent收到目标与已有诊断证据。
++
++## 如何与当前实验衔接
++
++先只换框架，复用原TRAIN/VAL缓存和采样政策，单独比较预筛、权重或分支。启用空间适配器属于第二个独立数据表示实验，不与框架修改混为单因素。
++
++依赖：Python及 requirements.txt；本次在Windows、Python 3.13、XGBoost 3.4.1上做CPU合成数据验证。没有调用付费DeepSeek API，也没有运行真实比赛全量训练或访问服务器。
++
++在新目录解压，从已有服务器会话建立新会话（以下路径是占位符）：
++
++```bash
++python search_step.py --initialize-from /path/to/old/session --session /path/to/new/v3_session --active-cache /path/to/train_val_cache --arm arm_policy.json
++python agent.py run --session /path/to/new/v3_session
++```
++
++运行前由使用者在进程环境中设置 `DEEPSEEK_API_KEY`。不要写入代码、配置、交付包或聊天。保留原来已部署的 `TYPEA_SEARCH_ISOLATION` 配置并将新会话列为允许输出；旧会话/原始数据/TEST的隔离范围须与服务器实际目录对应。这里没有包含机器专用密钥或调度器，也没有自动启动训练。
++
++初始化默认读取来源配置的 active_cache（没有时使用 source/cache），保留来源sampling_reference；若主动提供不同缓存，要求保持来源的时间切分。缓存、采样引用必须在目标机器可用；本包不携带真实数据、已有模型或会话。新会话会重新建立自己的基线，不宣称导入了旧模型。
++
++配置中的 max_trials、max_agent_calls 等仍是总预算；探索名额不是额外训练预算。独立分支和设备权重可通过 arm.config 的 parallel_allowed/device_weight_allowed 关闭，便于做消融。
++
++## 可选空间缓存
++
++从**不含raw_*列的官方缓存**出发，先做一个分片的资源检查：
++
++```bash
++python raw_cache.py --source-cache /path/to/official_train_val_cache --raw /path/to/type_a_csv_directory --out /path/to/spatial_smoke --smoke-parts 1 --representation spatial_v3
++python raw_cache.py --source-cache /path/to/official_train_val_cache --raw /path/to/type_a_csv_directory --out /path/to/new_spatial_cache --workers 4 --representation spatial_v3
++```
++
++支持原有stage1_csv.zip格式。表示版本和解析器哈希写入manifest；版本/解析器不同的已有缓存拒绝复用，已有或partial输出不自动删除。构建器会读取CSV，再在计算前剔除分区结束之后的行；若要求连原始TEST字节也不能读取，应提供事先隔离的TRAIN/VAL文件。Agent搜索仍只读取已允许的缓存。
++
++新增短窗口和结构描述会增加处理时间、缓存大小和内存。合成小数据验证不代表真实全量资源已经验证；先用smoke结果估算再决定并发。
++
++## 判断收益
++
++- 固定数据切分、评估队列、预警窗口、训练预算；只比较同 evaluation_id 的结果。
++- 记录新找回的故障、丢失命中、新增误报、消除误报；不只看一项F1。
++- 当前策略的CV有重复使用和选择偏差。确认窗口在模型冻结后使用，曾经被查看的时期如实标注；本版本训练入口继续拒绝TEST。
++- 内存/硬盘合成数据跑通表示接口兼容；真实跨设备有效性仍需各自的独立实验。不能把合成数据分数写成比赛结果。
++
++## 验证与交接
++
++```bash
++python -m unittest discover -s tests -v
++```
++
++交付中的“验证结果.txt”记录最终测试数、环境与局限；“修改清单.json”按文件列出新增/修改与哈希，“相对v2的修改.diff”便于其他AI审阅。先读本文件，再读包内skill及 experiment-method.md；不要把旧版README中的历史机器路径当成本版本启动配置。
+--- v2/agent.py
++++ v3/agent.py
+@@ -116,14 +116,21 @@
+ 
+     def scope(self):
+         rerank=self.c.get('rerank_allowed',False)
+-        return dict(level=2,allowed_changes=['params.'+k for k in BOUNDS]+['seed']+(['rerank','rerank_gate'] if rerank else []),
++        parallel=self.c.get('parallel_allowed',True)
++        return dict(level=2,allowed_changes=['params.'+k for k in BOUNDS]+['seed']+(['rerank','rerank_gate'] if rerank or parallel else [])+(['base_weight'] if self.c.get('device_weight_allowed',True) else []),
+             features_allowed=True, controls_without_best_gain=0,
++            parallel=dict(allowed=parallel, mode='parallel', gate=0.5,
++                note='Independent shallow device-balanced branch trains on ALL TRAIN rows, including low-score rows. '
++                     'Fuses row scores by max; same scorer, no unconditional acceptance. Not the M2-MFP rule tree.'),
++            feature_screen=dict(mode=self.c.get('prescreen_mode','balanced'),
++                exploration_budget=self.c.get('feature_exploration_budget',2),
++                exploration_used=len(self.s.get('feature_explorations',[]))),
+             rerank=dict(allowed=rerank,gates=list(FACTORS['rerank_gate']),
+                 note='rerank=gated adds a stage-2 model trained only on TRAIN rows whose out-of-fold stage-1 score >= rerank_gate; '
+                      'it reorders the high-score region to separate true faults from false alarms. Set both rerank and rerank_gate '
+                      'in one experiment whose parent is the single-stage model to build on; vary rerank_gate on a gated parent. '
+                      'Stage 2 uses the parent recipe params.') if rerank else dict(allowed=False),
+-            explanation='Both parameter and causal-feature research are open. Labels, sampling, weights, feature_set, schedule, and scoring are fixed per independent arm.')
++            explanation='Use evidence to choose parameter, causal-feature, permitted device-weight, or composite controls. Labels, sampling, feature_set, schedule and scorer remain fixed.')
+ 
+     def check_action(self,a):
+         require(isinstance(a,dict),'Return an action object')
+@@ -147,6 +154,10 @@
+                 if key.startswith('params.'):r['params'][key[7:]]=val
+                 else:r[key]=val
+             validate_recipe(r);diff=differences(parent['recipe'],r)
++            require(r['rerank']!='parallel' or self.c.get('parallel_allowed',True), 'Parallel branch outside scope')
++            require(r['rerank']!='gated' or self.c.get('rerank_allowed',False), 'Gated rerank outside scope')
++            if with_defaults(parent['recipe'])['rerank']=='parallel':
++                raise ValueError('Parallel controls start from the single-stage parent; do not stack branches')
+             require(diff and len(diff)<=3,'Use one factor, or at most three required coupled representation settings')
+             coupled=({'sample_unit','feature_set','score_aggregation'},{'rerank','rerank_gate'})
+             if len(diff)>1:require(any(set(diff)<=g for g in coupled),'Several unrelated factors changed')
+@@ -156,7 +167,7 @@
+                 a=dict(a,parent=parent['parent'])
+             require(identity(r) not in {identity(t['recipe']) for t in self.s['trials']},'Recipe already attempted; inspect history')
+             for k in ('hypothesis','expected','falsification'):require(isinstance(a.get(k),str) and a[k].strip(),'Need '+k)
+-            if r['rerank']=='gated':
++            if r['rerank'] in ('gated','parallel'):
+                 stage1=self.trial(a['parent'])
+                 require(with_defaults(stage1['recipe'])['rerank']=='none','Gated rerank needs a single-stage parent')
+             return dict(a,recipe=r)
+@@ -165,12 +176,15 @@
+             require(scope['features_allowed'],'First run a controlled parameter experiment or request evidence')
+             require(parent['recipe'].get('rerank','none')=='none','Feature experiments need a single-stage parent; use the gated trial\'s stage-1 parent')
+             require(self.s['feature_jobs']<self.c['max_feature_programs'],'Feature-job budget exhausted')
++            require(a.get('target','balanced') in ('precision','recall','interaction','balanced'), 'Unknown feature target')
++            if a.get('exploration_reason') is not None:
++                require(isinstance(a['exploration_reason'],str) and a['exploration_reason'].strip(), 'Need nonempty exploration_reason')
+             for k in ('expected','falsification'):require(isinstance(a.get(k),str) and a[k].strip(),'Need '+k)
+             if (self.root/'hypotheses.json').exists():
+                 ids={h['id'] for h in read(self.root/'hypotheses.json')['hypotheses']}
+                 require(a.get('hypothesis_id') in ids,'Name the hypothesis_id this feature request tests: '+','.join(sorted(ids)))
+         else:
+-            require(a.get('kind') in ('errors','coverage','score_distribution','feature_profiles','loss_curve','paired_devices','high_score_contrast'),'Unknown diagnostic kind')
++            require(a.get('kind') in ('errors','coverage','score_distribution','feature_profiles','loss_curve','paired_devices','high_score_contrast','missed_fault_contrast','error_atlas'),'Unknown diagnostic kind')
+             used=self.s['diagnostics'].get(parent['id'],[])
+             require(len(used)<self.c['max_diagnostics_per_trial'] and a['kind'] not in used,'Diagnostic already done or per-trial budget exhausted; use saved evidence')
+         return a
+@@ -197,7 +211,7 @@
+             validate_source((out/'candidate.py').read_text(encoding='utf-8'),plan)
+             args=[str(ROOT/'xgb_runner.py'),'--config',str(self.root/'config.json'),'--source',str(out/'candidate.py'),
+                   '--plan',str(out/'plan.json'),'--out',str(out)]
+-            if plan.get('rerank','none')=='gated':
++            if plan.get('rerank','none') in ('gated','parallel'):
+                 # Stage 1 = the parent; its device-grouped CV supplies out-of-fold gating scores.
+                 stage1=self.trial(t['parent']);receipt(self.folder(stage1))
+                 from rerank import stage1_identity
+@@ -237,12 +251,12 @@
+             save(self.folder(t)/'cv_plan.json',t['recipe'])
+             event(self.root,'cross_validation_started',trial=t['id'],folds=self.c['cv_folds'])
+             args=[str(ROOT/'crossval.py'),'--config',str(self.root/'config.json'),'--plan',str(self.folder(t)/'cv_plan.json'),'--out',str(dest)]
+-            if t['recipe'].get('rerank','none')=='gated':
++            if t['recipe'].get('rerank','none') in ('gated','parallel'):
+                 # Nested CV reuses the stage-1 parent's fold models; parent CV runs first.
+                 args+=['--parent-cv',str(self.cross_validate(self.trial(t['parent'])))]
+             process(args,self.folder(t)/'cv.log',self.c['trial_timeout_seconds'])
+         r=read(dest/'oof_complete.json')
+-        t['cv']=dict(best_step=r['best_step'],metrics=r['cv_metrics'],fault_units=r['fault_units'])
++        t['cv']=dict(best_step=r['best_step'],metrics=r['cv_metrics'],fault_units=r['fault_units'],error_counts=r.get('error_counts'))
+         self.commit();return dest
+ 
+     def accept(self,t):
+@@ -305,9 +319,9 @@
+             elif kind=='score_distribution':
+                 result['quantiles']={key:{str(q):float(v) if pd.notna(v) else None for q,v in eligible.loc[eligible[key],col].dropna().quantile([0,.25,.5,.75,1]).items()}
+                     for key,col in [('hit','max_hit_score'),('fp','max_score'),('fn','max_hit_score')]}
+-            elif kind=='high_score_contrast':
++            elif kind in ('high_score_contrast','missed_fault_contrast','error_atlas'):
+                 cv=self.cross_validate(t)
+-                process([str(ROOT/'contrast.py'),'contrast','--config',str(self.root/'config.json'),
++                process([str(ROOT/'contrast.py'),{'high_score_contrast':'contrast','missed_fault_contrast':'missed','error_atlas':'atlas'}[kind],'--config',str(self.root/'config.json'),
+                     '--program',t['recipe']['feature_program'],'--cv',str(cv),'--out',str(dest/'contrast.json')],
+                     dest/'execution.log',self.c['feature_timeout_seconds'])
+                 result['contrast']=read(dest/'contrast.json')
+@@ -341,7 +355,8 @@
+                 semantic_mapping=read(self.root/'mapping.json'),prior_experience=self.s.get('experience'),
+                 hypotheses=read(self.root/'hypotheses.json')['hypotheses'] if (self.root/'hypotheses.json').exists() else None,
+                 hypothesis_id=a.get('hypothesis_id'),
+-                error_evidence=[read(p).get('contrast') for p in sorted((self.root/'diagnostics'/parent['id']).glob('high_score_contrast/evidence.json'))],
++                error_evidence=[read(p) for p in sorted((self.root/'diagnostics'/parent['id']).glob('*/evidence.json'))],
++                target=a.get('target','balanced'),exploration_reason=a.get('exploration_reason'),
+                 error=stage['error'],previous_response=read(job/'answer.json') if (job/'answer.json').exists() else None)
+             answer=self.call('feature',payload);save(job/'answer.json',answer)
+             stage['attempts']+=1;save(job/'progress.json',stage)
+@@ -371,10 +386,16 @@
+                     job/'prescreen.log',self.c['feature_timeout_seconds'])
+             screen=read(job/'prescreen.json')
+             event(self.root,'feature_prescreen',job=a['job'],passed=screen['prescreen_passed'],features=screen['passed_features'])
+-            if not screen['prescreen_passed']:
++            from contrast import screen_decision
++            decision=screen_decision(screen,self.c,a,self.s.get('feature_explorations',[]))
++            save(job/'screen_decision.json',decision)
++            if decision['route']=='exploration':
++                used=self.s.setdefault('feature_explorations',[])
++                if a['job'] not in used:used.append(a['job'])
++                self.commit()
++            if not decision['train']:
+                 self.s['last_failure']=dict(kind='feature_prescreen',job=a['job'],question=a['question'],
+-                    error='No proposed column separated high-score true faults from false alarms (bootstrap AUC interval includes 0.5); no training run.',
+-                    evidence=dict(tp_units=screen['tp_units'],fp_units=screen['fp_units'],features=screen['features']))
++                    error=decision['reason'],evidence=screen)
+                 self.s['pending']=None;self.s['analyze_next']=parent['id'];self.commit();return
+         self.queue(r,parent['id'],'Feature-only contrast: '+a['question'],a)
+ 
+@@ -439,6 +460,7 @@
+             diagnostic_budget=self.c['max_diagnostics_per_trial'],
+             allowed_factor_values=FACTORS,hyperparameter_bounds=BOUNDS,
+             remaining_trials=self.c['max_trials']-len(self.s['trials']))
++        payload['diagnostic_kinds']=['errors','coverage','score_distribution','feature_profiles','loss_curve','paired_devices','high_score_contrast','missed_fault_contrast','error_atlas']
+         payload['feature_api']=feature_contract()
+         if (self.root/'hypotheses.json').exists():payload['hypotheses']=read(self.root/'hypotheses.json')['hypotheses']
+         payload['acceptance_rule']=dict(rule=self.c.get('acceptance','selection_f1'),
+--- v2/arm_policy.json
++++ v3/arm_policy.json
+@@ -1,6 +1,5 @@
+ {
+-  "name": "raw7_cv",
+-  "label_days": 7,
+-  "description": "TypeA 7-day memory failure prediction, v2 evidence loop. Inputs: the 99 official window features plus controller-parsed raw CE features (error-bit DQ/beat patterns, row/column/bank/chip spread, whole-past accumulation and novelty). Keep all TRAIN positives and the audited device/week selective negative sample with full loss mass. Fixed seven-day labels and scoring. First record falsifiable failure-mechanism hypotheses from field semantics, then baseline, one parameter control, then hypothesis-linked feature experiments guided by high-score TP-vs-FP contrast. Best changes only with paired device-grouped TRAIN cross-validation evidence; the earlier VAL half only screens. Do not access TEST, old test reports, or later VAL metrics. No claims of independent-test improvement.",
+-  "sampling_reference": "/root/autodl-tmp/typea_v2_20261027/sampling_reference.json"
++  "name": "v3_error_guided",
++  "description": "Domain-adapted evidence loop: separate false alarms, missed faults and coverage; allow bounded interaction/recall feature exploration, single-factor device weights and optional independent parallel branch. Reuse the source sampling policy and fixed evaluation. New source/representation requires a new cache/session. TEST stays outside search.",
++  "config": {"prescreen_mode":"balanced", "feature_exploration_budget":2, "parallel_allowed":true, "device_weight_allowed":true}
+ }
+--- v2/contrast.py
++++ v3/contrast.py
+@@ -65,71 +65,138 @@
+     return pd.DataFrame(out, columns=names, index=units.index)
+ 
+ 
+-def contrast(c, names, cv_dir, top=25):
+-    """Per-feature TP-vs-FP separation among high-score CV units of a finished CV run.
+-
+-    `c` must point (active_cache) at a cache that contains `names` (base or feature view).
+-    """
+-    cv_dir = Path(cv_dir)
+-    r = read(cv_dir / 'oof_complete.json')
+-    oof = pd.read_parquet(cv_dir / 'oof.parquet')
+-    units = high_units(oof, r['best_step'], r['cv_metrics']['threshold'])
+-    names = list(names)
+-    require(len(units), 'No high-score CV units')
+-    x = feature_snapshot(c, units, names)
+-    tp, fp = units.group.eq('TP').to_numpy(), units.group.eq('FP').to_numpy()
+-    rows = []
++def low_units(oof, step, threshold):
++    u = oof.loc[oof.step == step].copy()
++    fn = u.positive & ~(u.max_hit_score >= threshold)
++    tn = ~u.positive & ~(u.max_score >= threshold)
++    u = u.loc[fn | tn].copy()
++    u['group'] = np.where(u.positive, 'FN', 'TN')
++    return u
++
++
++def error_counts(oof, step, threshold):
++    u=oof.loc[oof.step==step]
++    positive=u.positive.to_numpy(bool)
++    hit=u.max_hit_score.to_numpy()>=threshold
++    alarm=u.max_score.to_numpy()>=threshold
++    fn=positive & ~hit
++    no_clock=u.timely_prediction_opportunities.to_numpy()==0
++    no_score=~np.isfinite(u.max_hit_score.to_numpy())
++    return dict(TP=int((positive & hit).sum()),
++        FP=int((alarm & (~positive | ~hit)).sum()), FN=int(fn.sum()),
++        TN=int((~positive & ~alarm).sum()),
++        fn_no_timely_clock=int((fn & no_clock).sum()),
++        fn_no_timely_score=int((fn & ~no_clock & no_score).sum()),
++        fn_scored_below_threshold=int((fn & ~no_score).sum()),
++        fn_with_outside_window_alarm=int((fn & alarm).sum()),
++        note='Outside-window alarms overlap FN categories and also count as FP. Missing timely scores do not prove no raw data.')
++
++
++def cluster_interval(pos, neg, pdev, ndev, n=200):
++    # A device can appear in several periods, even in both groups. Resample it once
++    # jointly rather than pretending period-device units are independent devices.
++    devices=np.unique(np.r_[pdev,ndev]);rng=np.random.default_rng(SEED)
++    vals=[]
++    for _ in range(n):
++        sampled=rng.choice(devices,len(devices),replace=True)
++        ids,counts=np.unique(sampled,return_counts=True)
++        mult=dict(zip(ids,counts))
++        a=np.repeat(pos,[mult.get(d,0) for d in pdev])
++        b=np.repeat(neg,[mult.get(d,0) for d in ndev])
++        value=auc(a,b)
++        if np.isfinite(value):vals.append(value)
++    return [float(v) for v in np.quantile(vals,[.025,.975])] if len(vals)>=n//2 else [np.nan,np.nan]
++
++
++def contrast(c, names, cv_dir, top=25, kind='high_score_contrast'):
++    cv_dir=Path(cv_dir);r=read(cv_dir/'oof_complete.json')
++    from common import sha
++    if r.get('oof_sha256'):
++        require(sha(cv_dir/'oof.parquet')==r['oof_sha256'],'OOF evidence changed')
++    oof=pd.read_parquet(cv_dir/'oof.parquet')
++    threshold=r['cv_metrics']['threshold'];step=r['best_step']
++    high=kind=='high_score_contrast'; positive_name,negative_name=('TP','FP') if high else ('FN','TN')
++    full=(high_units if high else low_units)(oof,step,threshold)
++    counts={g:int((full.group==g).sum()) for g in (positive_name,negative_name)}
++    # Bounded, deterministic diagnostic sampling only; scorer and cohorts are unchanged.
++    cap=c.get('contrast_max_units_per_group',1000)
++    parts=[g.sample(min(len(g),cap),random_state=SEED) for _,g in full.groupby('group',sort=True)]
++    units=pd.concat(parts).sort_index() if parts else full
++    names=list(names)
++    x=feature_snapshot(c,units,names) if len(units) else pd.DataFrame(columns=names)
++    pos=units.group.eq(positive_name).to_numpy();neg=units.group.eq(negative_name).to_numpy()
++    devices=units.device.to_numpy()
++    rows=[]
+     for name in names:
+-        v = x[name].to_numpy()
+-        a = auc(v[tp], v[fp])
+-        rows.append(dict(feature=name, auc_tp_vs_fp=a, separation=abs(a - .5) if np.isfinite(a) else 0.,
+-                         tp_median=float(np.nanmedian(v[tp])) if np.isfinite(v[tp]).any() else None,
+-                         fp_median=float(np.nanmedian(v[fp])) if np.isfinite(v[fp]).any() else None,
+-                         tp_missing=float(np.isnan(v[tp]).mean()) if tp.any() else None,
+-                         fp_missing=float(np.isnan(v[fp]).mean()) if fp.any() else None))
+-    rows.sort(key=lambda d: -d['separation'])
++        v=x[name].to_numpy(float);a=auc(v[pos],v[neg])
++        rows.append(dict(feature=name,auc_tp_vs_fp=a if high else None,auc_positive_vs_negative=a,
++            separation=abs(a-.5) if np.isfinite(a) else 0.,
++            positive_median=float(np.nanmedian(v[pos])) if np.isfinite(v[pos]).any() else None,
++            negative_median=float(np.nanmedian(v[neg])) if np.isfinite(v[neg]).any() else None,
++            positive_missing=float(np.isnan(v[pos]).mean()) if pos.any() else None,
++            negative_missing=float(np.isnan(v[neg]).mean()) if neg.any() else None))
++    rows.sort(key=lambda d:-d['separation'])
+     for d in rows[:top]:
+-        d['auc_interval_95'] = auc_interval(x[d['feature']].to_numpy()[tp], x[d['feature']].to_numpy()[fp])
+-        lo, hi = d['auc_interval_95']
+-        d['credible'] = bool(np.isfinite(lo) and (lo > .5 or hi < .5))
+-    activity = oof.loc[oof.step == r['best_step']]
+-    return dict(kind='high_score_contrast', step=r['best_step'], threshold=r['cv_metrics']['threshold'],
+-                tp_units=int(tp.sum()), fp_units=int(fp.sum()), cv_metrics=r['cv_metrics'],
+-                features=[{k: (None if isinstance(v, float) and not np.isfinite(v) else v) for k, v in d.items()}
+-                          for d in rows[:top]],
+-                credible_features=[d['feature'] for d in rows[:top] if d.get('credible')],
+-                eligible_units=int(len(activity)),
+-                note=('High-score TRAIN out-of-fold units; AUC>0.5 means true faults have larger values than '
+-                      'false alarms. Intervals are stratified bootstraps. Evidence only, not a validation result.'))
+-
+-
+-def prescreen(c, cv_dir, new_names):
+-    """Does any proposed column separate the parent's high-score TP from FP (CI excludes 0.5)?
+-
+-    Uses the parent's CV out-of-fold errors; `c` points at the candidate feature view.
+-    """
+-    ev = contrast(c, new_names, cv_dir, top=len(new_names))
+-    passed = [d['feature'] for d in ev['features'] if d.get('credible')]
+-    return dict(ev, kind='feature_prescreen', prescreen_passed=bool(passed), passed_features=passed)
++        v=x[d['feature']].to_numpy(float)
++        pp=pos & np.isfinite(v); nn=neg & np.isfinite(v)
++        enough=len(np.unique(devices[pp]))>=3 and len(np.unique(devices[nn]))>=3
++        ci=cluster_interval(v[pp],v[nn],devices[pp],devices[nn]) if enough else [np.nan,np.nan]
++        d['auc_interval_95']=ci
++        d['credible']=bool(enough and np.isfinite(ci).all() and (ci[0]>.5 or ci[1]<.5))
++    def clean(v):
++        if isinstance(v,dict):return {k:clean(x) for k,x in v.items()}
++        if isinstance(v,list):return [clean(x) for x in v]
++        return None if isinstance(v,float) and not np.isfinite(v) else v
++    return clean(dict(kind=kind,step=step,threshold=threshold,cv_metrics=r['cv_metrics'],
++        tp_units=counts.get('TP',0),fp_units=counts.get('FP',0),group_counts=counts,
++        sampled_group_counts={g:int((units.group==g).sum()) for g in counts},
++        features=rows[:top],credible_features=[d['feature'] for d in rows[:top] if d.get('credible')],
++        eligible_units=int((oof.step==step).sum()),error_counts=error_counts(oof,step,threshold),
++        note='Exploratory TRAIN OOF evidence; device-cluster bootstrap, no multiple-testing correction. '
++             'Features are the latest causal row at the best relevant decision time, not attribution of a pooled score. '
++             'Fault decision times use outcomes for retrospective diagnosis only. Unscored units stay in counts; '
++             'small groups or missing snapshots are insufficient evidence, not proof of absent signal.'))
++
++
++def atlas(c,names,cv_dir,top=25):
++    high=contrast(c,names,cv_dir,top,'high_score_contrast')
++    low=contrast(c,names,cv_dir,top,'missed_fault_contrast')
++    return dict(kind='error_atlas',error_counts=high['error_counts'],precision=high,recall=low)
++
++
++def prescreen(c,cv_dir,new_names):
++    high=contrast(c,new_names,cv_dir,len(new_names),'high_score_contrast')
++    low=contrast(c,new_names,cv_dir,len(new_names),'missed_fault_contrast')
++    passed=sorted(set(high['credible_features']+low['credible_features']))
++    return dict(kind='feature_prescreen',prescreen_passed=bool(passed),passed_features=passed,
++        high_score=high,missed_faults=low,tp_units=high['tp_units'],fp_units=high['fp_units'],
++        features=high['features'],note='A pass permits training; it does not establish model improvement.')
++
++
++def screen_decision(screen,c,request,used):
++    mode=c.get('prescreen_mode','balanced')
++    high=screen.get('high_score',screen)
++    passed=bool(high.get('credible_features')) if mode=='strict_high' else screen['prescreen_passed']
++    if passed:return dict(train=True,route='evidence',reason='Univariate diagnostic signal; verify in a model control')
++    reason=request.get('exploration_reason')
++    already=request.get('job') in used
++    if mode=='balanced' and isinstance(reason,str) and reason.strip() and (already or len(used)<c.get('feature_exploration_budget',2)):
++        return dict(train=True,route='exploration',reason=reason)
++    return dict(train=False,route='deferred',reason='No univariate evidence in the permitted contrasts. '
++        'Not proof of uselessness: a hypothesis-linked recall/interaction experiment may use a remaining exploration slot with exploration_reason.')
+ 
+ 
+ def main():
+     import argparse
+     from history_store import checked_manifest
+-    from feature_programs import materialize, program
+-    p = argparse.ArgumentParser()
+-    p.add_argument('task', choices=['contrast', 'prescreen'])
+-    p.add_argument('--config', required=True); p.add_argument('--program', required=True)
+-    p.add_argument('--cv', required=True); p.add_argument('--out', required=True)
+-    a = p.parse_args()
+-    c = read(a.config)
+-    cc, m = materialize(c, a.program, checked_manifest(c))
+-    if a.task == 'contrast':
+-        result = contrast(cc, m['features'], a.cv)
+-    else:
+-        result = prescreen(cc, a.cv, program(c, a.program)['features'])
+-    save(a.out, result)
+-
+-
+-if __name__ == '__main__':
+-    main()
++    from feature_programs import materialize,program
++    p=argparse.ArgumentParser();p.add_argument('task',choices=['contrast','missed','atlas','prescreen'])
++    for field in ('config','program','cv','out'):p.add_argument('--'+field,required=True)
++    a=p.parse_args();c=read(a.config);cc,m=materialize(c,a.program,checked_manifest(c))
++    if a.task=='prescreen':result=prescreen(cc,a.cv,program(c,a.program)['features'])
++    elif a.task=='atlas':result=atlas(cc,m['features'],a.cv)
++    else:result=contrast(cc,m['features'],a.cv,kind='high_score_contrast' if a.task=='contrast' else 'missed_fault_contrast')
++    save(a.out,result)
++
++
++if __name__=='__main__':main()
+--- v2/crossval.py
++++ v3/crossval.py
+@@ -225,7 +225,8 @@
+     curves.sort(key=lambda r: (-r['f1'], r['FP'], r['step']))
+     best = curves[0]
+     units = oof.loc[oof.step == best['step']]
+-    return dict(best_step=best['step'], cv_metrics=best, curve=sorted(curves, key=lambda r: r['step']),
++    from contrast import error_counts
++    return dict(best_step=best['step'], cv_metrics=best, error_counts=error_counts(oof,best['step'],best['threshold']), curve=sorted(curves, key=lambda r: r['step']),
+                 fault_units=int(units.positive.sum()), eligible_units=len(units))
+ 
+ 
+@@ -239,8 +240,8 @@
+ def paired_cv(current, reference, bootstraps=1000, seed=SEED):
+     """Paired bootstrap of pooled CV F1 at each model's own CV-selected step and threshold.
+ 
+-    Resamples (period, device) units with replacement, stratified by fault status;
+-    both models see the same resampled units.
++    Resamples devices with all their periods, stratified by ever-fault status;
++    both models see the same resampled clusters. Step/threshold selection is exploratory.
+     """
+     a = pd.read_parquet(Path(current) / 'oof.parquet')
+     b = pd.read_parquet(Path(reference) / 'oof.parquet')
+@@ -250,13 +251,18 @@
+     require(ua.index.equals(ub.index) and ua.positive.equals(ub.positive), 'CV units differ between models')
+     va = ua[['hit', 'fp', 'fn']].to_numpy(np.int64)
+     vb = ub[['hit', 'fp', 'fn']].to_numpy(np.int64)
++    # A device can span several periods: resample its joint outcome totals as a
++    # cluster. Stratify by ever-fault-in-these-periods, keeping all its periods together.
++    joined=pd.DataFrame(np.c_[va,vb],index=ua.index)
++    device_totals=joined.groupby(level='device').sum()
++    device_fault=ua.positive.groupby(level='device').any().reindex(device_totals.index)
+     rng = np.random.default_rng(seed)
+     totals = np.zeros((bootstraps, 6), np.int64)
+     for flag in (False, True):
+-        ix = np.flatnonzero(ua.positive.to_numpy() == flag)
++        ix = np.flatnonzero(device_fault.to_numpy() == flag)
+         if not len(ix):
+             continue
+-        pats, counts = np.unique(np.c_[va[ix], vb[ix]], axis=0, return_counts=True)
++        pats, counts = np.unique(device_totals.to_numpy(np.int64)[ix], axis=0, return_counts=True)
+         totals += rng.multinomial(len(ix), counts / counts.sum(), size=bootstraps) @ pats
+ 
+     def f1(v):
+@@ -270,7 +276,7 @@
+                 new_hits=int((ua.hit & ~ub.hit).sum()), lost_hits=int((~ua.hit & ub.hit).sum()),
+                 new_false_alarms=int((ua.fp & ~ub.fp).sum()), removed_false_alarms=int((~ua.fp & ub.fp).sum()),
+                 current=ra['cv_metrics'], reference=rb['cv_metrics'],
+-                note='Paired bootstrap over out-of-fold (period, device) units, stratified by fault status.')
++                note='Paired device-cluster bootstrap keeps all periods of a device together; stratified by ever-fault status. Reused CV selection remains exploratory.')
+ 
+ 
+ def main():
+@@ -282,10 +288,11 @@
+     a = p.parse_args()
+     from experiment_contract import validate_recipe, with_defaults
+     recipe = validate_recipe(with_defaults(read(a.plan)))
+-    if recipe['rerank'] == 'gated':
++    if recipe['rerank'] in ('gated','parallel'):
+         require(a.parent_cv, 'Gated rerank cross-validation needs --parent-cv')
+-        import rerank
+-        r = rerank.oof_tables(read(a.config), recipe, a.out, a.parent_cv)
++        import rerank, parallel_branch
++        module = parallel_branch if recipe['rerank']=='parallel' else rerank
++        r = module.oof_tables(read(a.config), recipe, a.out, a.parent_cv)
+     else:
+         r = oof_tables(read(a.config), recipe, a.out)
+     print('CV_DONE best_step=%s f1=%.4f fault_units=%s' % (r['best_step'], r['cv_metrics']['f1'], r['fault_units']), flush=True)
+--- v2/experiment_contract.py
++++ v3/experiment_contract.py
+@@ -17,7 +17,7 @@
+     score_aggregation=('latest','window_max','window_mean','window_second','all_history_max'),
+     seed=(42,43,44),
+     # Two-stage gated reranking (rerank.py); gate is a stage-1 score threshold on TRAIN OOF scores.
+-    rerank=('none','gated'), rerank_gate=(0.5,0.7,0.8,0.85,0.9))
++    rerank=('none','gated','parallel'), rerank_gate=(0.5,0.7,0.8,0.85,0.9))
+ # Recipes saved before the rerank factor existed are read as single-stage.
+ LEGACY_DEFAULTS=dict(rerank='none',rerank_gate=0.5)
+ MODES = tuple(FACTORS['sample_unit'])
+@@ -37,7 +37,7 @@
+     require(isinstance(r,dict) and set(r)==set(FACTORS)|{'params','feature_program'},
+             'Recipe fields: '+','.join(FACTORS)+',params')
+     require(r['rerank']=='none' or r['sample_unit']=='event' and r['feature_set']=='base',
+-            'Gated reranking is implemented for event (base) models')
++            'Composite models support event-row (base) inputs')
+     require(r['rerank']=='gated' or float(r['rerank_gate'])==LEGACY_DEFAULTS['rerank_gate'],
+             'rerank_gate only applies with rerank=gated; keep 0.5 for single-stage recipes')
+     import re
+--- v2/parallel_branch.py
++++ v3/parallel_branch.py
+@@ -0,0 +1,149 @@
++"""Independent all-row branch. Device-balanced shallow boosting, NOT M2-MFP.
++
++The second branch sees every eligible TRAIN row, irrespective of stage-1 score.
++Its representation is the current numeric event-row input (possibly already aggregated).
++Device weights total one per device; fixed depth 2 / sqrt class weight differ deliberately
++from the parent. This is a named multi-factor architecture control, not a weight ablation.
++Max fusion can promote low stage-1 scores. Threshold/step selection remains unchanged.
++"""
++import base64
++import copy
++import gc
++import json
++import time
++from pathlib import Path
++import numpy as np
++import pandas as pd
++import xgboost as xgb
++from common import require, read, save, sha, digest
++from rerank import _booster, _matrix, _folds, stage1_identity, positive_weight, params, fit, load_model, cpu_copy
++
++MAGIC = b'PARALLEL1\n'
++
++
++class Parallel:
++    def __init__(self, primary, auxiliary, primary_steps=None):
++        self.primary, self.auxiliary = primary, auxiliary
++        self.primary_steps = primary_steps
++
++    def inplace_predict(self, x, iteration_range=(0, 0)):
++        a = self.primary.inplace_predict(x, iteration_range=(0, self.primary_steps or 0))
++        b = self.auxiliary.inplace_predict(x, iteration_range=iteration_range)
++        return np.maximum(a, b)
++
++    def get_score(self, importance_type='gain'):
++        # Importance is for the auxiliary branch; primary remains in its parent receipt.
++        return self.auxiliary.get_score(importance_type=importance_type)
++
++    def set_param(self, p):
++        self.primary.set_param(p); self.auxiliary.set_param(p)
++
++    def save_raw(self, raw_format='ubj'):
++        doc = dict(primary_steps=self.primary_steps, fusion='max',
++                   primary=base64.b64encode(bytes(self.primary.save_raw(raw_format='ubj'))).decode(),
++                   auxiliary=base64.b64encode(bytes(self.auxiliary.save_raw(raw_format='ubj'))).decode())
++        return bytearray(MAGIC + json.dumps(doc, sort_keys=True).encode())
++
++    def save_model(self, path):
++        Path(path).write_bytes(bytes(self.save_raw()))
++
++
++def from_raw(raw, threads=1):
++    doc = json.loads(bytes(raw)[len(MAGIC):])
++    require(doc['fusion'] == 'max', 'Unknown fusion')
++    return Parallel(_booster(base64.b64decode(doc['primary']), threads),
++                    _booster(base64.b64decode(doc['auxiliary']), threads), doc['primary_steps'])
++
++
++def branch_recipe(recipe):
++    r = copy.deepcopy(recipe)
++    r.update(rerank='none', rerank_gate=.5, base_weight='device', weight_policy='sqrt_ratio')
++    r['params'].update(max_depth=2, min_child_weight=1.)
++    return r
++
++
++def balance(w, dev):
++    """Normalize only the training subset; held-out devices never enter these totals."""
++    _, inverse = np.unique(dev, return_inverse=True)
++    total = np.bincount(inverse, weights=w)
++    require((total > 0).all(), 'Device weight totals must be positive')
++    return (w / total[inverse]).astype(np.float32)
++
++
++def fold_auxiliary(x, y, w, dev, rowfold, fold, recipe, c, rounds):
++    keep = rowfold != fold
++    return fit(x[keep], y[keep], balance(w[keep], dev[keep]), branch_recipe(recipe), c, rounds)
++
++
++def train_full(c, recipe, m, out, stage1_folder, stage1_cv):
++    from prediction import predict
++    from evaluation import select
++    out, stage1_folder = Path(out), Path(stage1_folder)
++    prev = read(stage1_folder / 'result.json')
++    require(prev['recipe'].get('rerank','none') == 'none', 'Parallel parent must be single-stage')
++    require(stage1_identity(prev['recipe']) == stage1_identity(recipe), 'Parallel parent recipe differs')
++    require(sha(stage1_folder / 'model.ubj') == prev['model_sha256'], 'Parent model changed')
++    tick = time.monotonic()
++    x, y, w, dev, audit = _matrix(c, recipe, m, out)
++    w = balance(w, dev); br = branch_recipe(recipe)
++    p = params(br, c, positive_weight(y,w,br['weight_policy']))
++    dt = xgb.QuantileDMatrix(x,label=y,weight=w,max_bin=br['params']['max_bin'],nthread=c['num_threads'])
++    del x; gc.collect()
++    b = xgb.Booster(p, cache=[dt]); primary = load_model(stage1_folder/'model.ubj', c['num_threads'])
++    best = None; stale = 0; history = []; boost = 0.; infer = 0.
++    feature_seconds = time.monotonic()-tick
++    for step in range(1,c['rounds']+1):
++        t = time.monotonic(); b.update(dt,step-1); boost += time.monotonic()-t
++        if step != 1 and step % c['eval_every'] and step != c['rounds']:continue
++        t = time.monotonic(); model = Parallel(primary,cpu_copy(b,c['num_threads']))
++        table, stats = predict(model,c,recipe,m,'val'); metric, grid = select(table)
++        infer += time.monotonic()-t
++        history.append(dict(step=step,val_period_unweighted_bce=stats['val_period_unweighted_bce'],**metric))
++        save(out/'loss_history.json',history)
++        if best is None or metric['f1']>best['metrics']['f1']+1e-12:
++            best=dict(step=step,metrics=metric,score_sha256=stats['score_sha256']); stale=0
++            model.save_model(out/'model.ubj'); grid.to_csv(out/'threshold_search_val.csv',index=False,float_format='%.17g')
++        else:stale+=1
++        print(f'Parallel step {step}: F1={metric["f1"]:.6f} TP={metric["TP"]} FP={metric["FP"]} FN={metric["FN"]}',flush=True)
++        if stale>=c['patience']:break
++    actual=json.loads(b.save_config())['learner']['generic_param']['device']
++    require(not c['device'].startswith('cuda') or actual.startswith('cuda'),'Unexpected CPU fallback')
++    del dt; gc.collect()
++    audit=dict(audit,parallel=dict(primary_model_sha256=prev['model_sha256'],fusion='max',
++        branch_recipe=br,all_training_rows=True,device_weight_total=1.,
++        feature_importance='auxiliary only',note='Generic shallow branch, not raw-event rule-tree reproduction'))
++    return best,audit,p,actual,dict(feature_and_matrix_seconds=feature_seconds,boost_updates_seconds=boost,validation_prediction_seconds=infer)
++
++
++def oof_tables(c, recipe, out, parent_cv, rounds=None):
++    from history_store import checked_manifest
++    from feature_programs import materialize
++    from crossval import periods, score_devices, summarize, SEED
++    out,parent_cv=Path(out),Path(parent_cv);out.mkdir(parents=True,exist_ok=True)
++    c,m=materialize(c,recipe['feature_program'],checked_manifest(c))
++    pr=read(parent_cv/'oof_complete.json')
++    require(stage1_identity(pr['recipe'])==stage1_identity(recipe),'Parallel CV parent differs')
++    require(pr['recipe'].get('rerank','none')=='none','Parallel CV parent must be single-stage')
++    require(sha(parent_cv/'oof.parquet')==pr['oof_sha256'],'Parent OOF changed')
++    rounds=rounds or c.get('cv_rounds',400);k=pr['folds'];plist=periods(m,c)
++    require(plist==pr['periods'],'CV periods differ')
++    key=digest(dict(recipe=recipe,rounds=rounds,eval_every=c['eval_every'],periods=plist,k=k,seed=SEED,
++                    manifest=sha(Path(c['active_cache'])/'manifest.json'),parent=pr['oof_sha256'],version=1))
++    done=out/'oof_complete.json'
++    if done.exists() and read(done)['key']==key:return read(done)
++    tick=time.monotonic(); x,y,w,dev,audit=_matrix(c,recipe,m,out)
++    registry,fold_of=_folds(c,m,k);rowfold=fold_of[dev]
++    steps=sorted({s for s in range(c['eval_every'],rounds+1,c['eval_every'])}|{rounds});rows=[]
++    for fold in range(k):
++        auxiliary=fold_auxiliary(x,y,w,dev,rowfold,fold,recipe,c,rounds)
++        primary=load_model(parent_cv/f'fold_{fold}'/'model.ubj',c['num_threads'])
++        model=Parallel(primary,auxiliary,pr['best_step'])
++        t=score_devices(model,steps,c,recipe,m,plist,registry.device.to_numpy()[fold_of==fold])
++        t['fold']=fold;rows.append(t)
++        folder=out/f'fold_{fold}';folder.mkdir(exist_ok=True);model.save_model(folder/'model.ubj')
++    del x;gc.collect()
++    oof=pd.concat(rows,ignore_index=True);oof.to_parquet(out/'oof.parquet',index=False)
++    result=dict(key=key,recipe=recipe,periods=plist,folds=k,rounds=rounds,seconds=time.monotonic()-tick,
++        oof_sha256=sha(out/'oof.parquet'),parallel=dict(fusion='max',all_training_rows=True,
++        primary_step=pr['best_step'],note='Both fits exclude the held-out devices. Reused CV selects steps/thresholds; exploratory, not a fresh final test.'),**summarize(oof))
++    save(done,result);return result
+--- v2/prompts/analysis.txt
++++ v3/prompts/analysis.txt
+@@ -3,9 +3,12 @@
+ 可选 action：
+ experiment：填写 parent（已完成实验 ID）、changes（只包含要改动的 recipe 路径，如 params.max_depth:6）、reason、hypothesis、expected、falsification。优先单因素对照。所有可改范围来自 scope.allowed_changes；特征版本通过 features 动作生成。
+ features：填写 parent、question、reason、expected、falsification。问题应具体到要区分哪两种行为，例如“持续偏高与近期突增能否解释误报”。特征 agent 负责代码，你不代写特征程序。控制器随后自动执行同参数、同样本策略的特征对照。
+-diagnose：填写 parent、kind（errors/coverage/score_distribution/feature_profiles/loss_curve/paired_devices/high_score_contrast）、question、reason。已有诊断直接引用；每轮有诊断上限。
++diagnose：填写 parent、kind（errors/coverage/score_distribution/feature_profiles/loss_curve/paired_devices/high_score_contrast/missed_fault_contrast/error_atlas）、question、reason。已有诊断直接引用；每轮有诊断上限。
+ high_score_contrast 是错例对比证据：在 TRAIN 交叉验证的留出设备上，取超过阈值的高分单元，比较真故障（TP）与误报（FP）在每个特征上的 AUC 及 bootstrap 区间（credible=区间不含 0.5）。若误报多而参数对照无效，优先用它定位“哪些量能区分真故障与误报”，再据此提出 features。
+-features 动作必须额外填写 hypothesis_id，指向 payload.hypotheses 中的一条假设；question 写清要验证该假设的哪种可区分行为。特征提出后控制器会先做预筛：新列若不能区分父实验高分区的 TP 与 FP，则不训练并在 last_failure 中返回证据，请换假设或换表达，不要重复同一思路。
++features 动作必须额外填写 hypothesis_id，指向 payload.hypotheses 中的一条假设；question 写清要验证该假设的哪种可区分行为。特征提出后控制器检查两个方向：高分 TP/FP 与漏报 FN/正常 TN。任一方向有探索性单变量证据即可进入训练；这不是效果证明。
++features 可填 target=precision/recall/interaction/balanced。缺少单变量证据但有组合效应、低覆盖或小样本理由时，填写 exploration_reason，解释为何仍值得训练、引用具体证据和反例；控制器按剩余探索预算决定是否放行。无理由或预算不足会暂缓，不代表特征无用。strict_high 对照模式只允许高分证据，不放行探索。
++missed_fault_contrast 比较 FN 与 TN 的因果特征快照；error_atlas 同时返回两组对比和漏报原因计数。先区分无及时预测时刻、存在时刻但无及时分数、已有分数但低于阈值；窗口外告警是重叠计数，也可能同时贡献 FP/FN。诊断用于定位下一次实验，不能把事后诊断时间作为模型输入。
++特征 AUC 区间含0.5通常表示证据不足；不能由此断言没有信号、标签改动没有收益或数据已经到上限。组内设备过少、快照缺失、相关性和组合效应都可能影响诊断。
+ 采纳规则见 payload.acceptance_rule：best 只有在“TRAIN 设备分组交叉验证的配对 bootstrap 95% 区间下界 > lower_bound 且净命中未减少”时才更新；选择窗口 F1 只用于快速筛除明显更差的实验。trial 的 acceptance 字段记录了每次判定（cv_delta_f1、区间、新增/丢失命中、新增/消除误报）。区间跨过 0 表示“持平”，不是失败，可以据此判断方向是否值得继续。
+ 两阶段重排序（仅当 scope.rerank.allowed 为 true）：experiment 的 changes 同时写 {"rerank":"gated","rerank_gate":g}，parent 为要在其上构建的单阶段模型。第二阶段只在 TRAIN 内第一阶段 out-of-fold 分数 ≥ g 的行上训练，目标就是区分高分区的真故障与误报；它适合“高分区 TP/FP 有可信可分特征，但加特征后全局模型没有利用”的情形。门限越高，第二阶段样本越少：若报告样本不足，换更低的 g。已门控的实验上只能改 rerank_gate；特征实验必须以单阶段模型为 parent。
+ stop：填写 reason，说明预算完成、真实阻塞或已有充分结果。
+@@ -14,5 +17,8 @@
+ 参数层若解释不了结果，可以基于诊断请求特征研究；标签/权重/采样等更大改动按 scope 开放。避免仅反复更换 seed。
+ 特征研究受 payload.feature_api 约束；提出可在该接口执行的问题。观测间隔和累计观测数有 past.gap_seconds(frame) 和 past.observation_count(frame) 辅助函数。不得要求通过动态列扫描、整段统计或未来数据生成特征。有限 TRAIN 抽样的全空字段不是总体全空的证据；接口/抽样失败不是预测成绩下降，先引用具体失败原因再决定是否继续。
+ 
+-本次独立研究任务见 payload.task_context.instructions。输入特征包含官方 99 个窗口特征和控制器从原始 CE 日志解析的 raw_* 特征（错误比特 DQ/beat 形态、行/列/bank/芯片空间扩散、长期累积与新出现）；你和特征 agent 都不直接读取原始文件或 TEST。
++本次独立研究任务见 payload.task_context.instructions。设备类型、实际字段及表示版本以 payload 为准；内存可能有 raw_* / spatial_*，硬盘或其他设备不应假设有比特、芯片或 bank 字段。你和特征 agent 都不直接读取原始文件或 TEST。
++当 scope.parallel.allowed=true，可从单阶段 parent 提出 changes={"rerank":"parallel"}（rerank_gate保持0.5）。这是全保留训练行上的独立设备均衡浅层XGBoost分支，与父模型逐行max融合，原模型低分也能被补充分支提起。它不是高分复检，也不是M2-MFP定制树；父分支被冻结，不能同时改其他因素。用 CV 新增/丢失命中、新增/消除误报判断互补性；它可能增加误报，只有采纳检验通过才成为best。
++当 scope.allowed_changes 包含 base_weight，可先提出仅改 base_weight 的单因素对照。parallel同时改变分支结构和权重，是预先声明的组合实验，不能把其收益独自归因于设备权重。
++原始字段解析/短窗口/部件结构改变属于数据适配版本改变，当前features接口只组合已提供的数值列；若必要信息不在输入中，明确提出适配缺口，不声称已通过transform补齐，也不自动切换当前缓存。
+ 严格遵守scope；标签和采样不属于本轮可调因素。前两组完成后优先features，不反复调参而绕过特征Agent。
+--- v2/prompts/feature.txt
++++ v3/prompts/feature.txt
+@@ -6,8 +6,8 @@
+ observations 中每个文件只能匹配一个 glob；id_column=null 表示文件名 stem 是设备 ID，id_column 也可以是列名列表，按 id_separator（默认下划线）拼接复合设备 ID。观测和工单的 ID 生成方式须一致。filters 用来选择已声明的设备类型。缺列保留 NaN。time_unit 明确 s/ms/us/ns/datetime/date，timezone 写数据说明规定的时区。
+ failure.mode=tickets 时给出 glob、id_column、time_column、time_unit、timezone、filters、definition；mode=indicator 时给出 column、positive_values、definition。
+ followup.mode=last_observation 保守使用首末观测时间；mode=file 使用随访表；只有用户提供的说明明确承诺覆盖期间故障工单完整时才用 complete_coverage，并在 basis 引用依据。不确定关键语义时返回 {"needs_information":"具体缺少什么"}。
+-task=hypotheses：在看到任何结果之前，利用你对该类器件失效机理的领域知识，根据 fields（特征名与含义）、domain 和 instructions，返回 {"hypotheses":[{"id":"H1","mechanism":"失效机理","basis":"依据：公开研究/器件原理/运维经验","fields":["已存在的特征名"],"expected_direction":"higher_in_failing|lower_in_failing|pattern","falsified_if":"什么数据结果会否定它"}]}，3–12 条。fields 只能引用给出的特征名。要覆盖不同层次：例如单次错误的比特/空间形态、地址空间扩散（行/列/bank/芯片）、长期累积与新出现、时间上的突增或持续性。只写可被数据检验的假设，不要写实现代码。
+-task=features：根据分析问题和 TRAIN 期摘要，返回 {"source":"def transform(frame): ...","features":["fe_name"],"reason":"假设与含义"}。最多生成给定预算数量的特征；不能把故障标签或设备 ID 加入代码。payload.hypothesis_id 指定本次要检验的假设，reason 需说明特征如何检验它；payload.error_evidence 是父实验高分区 TP 与 FP 的特征对比（credible_features 为已显著可分的量），新特征应补充现有列尚不能区分的方面，而不是重复已有的计数。
++task=hypotheses：在看到任何结果之前，利用你对该类器件失效机理的领域知识，根据 fields（特征名与含义）、domain 和 instructions，返回 {"hypotheses":[{"id":"H1","mechanism":"失效机理","basis":"依据：公开研究/器件原理/运维经验","fields":["已存在的特征名"],"expected_direction":"higher_in_failing|lower_in_failing|pattern","falsified_if":"什么数据结果会否定它"}]}，3–12 条。fields 只能引用给出的特征名。依据实际领域覆盖不同可能机制。内存可考虑比特形状和部件分布，硬盘可考虑指标变化，其他设备依字段语义提出机制；所有这些都是待检验的假设，不把内存结构套用到其他设备。只写可被数据检验的假设，不要写实现代码。
++task=features：根据分析问题和 TRAIN 期摘要，返回 {"source":"def transform(frame): ...","features":["fe_name"],"reason":"假设与含义"}。最多生成给定预算数量的特征；不能把故障标签或设备 ID 加入代码。payload.hypothesis_id 指定本次要检验的假设，reason 需说明特征如何检验它；payload.error_evidence 包含父实验已完成的误报/漏报诊断；target指明precision、recall、interaction或balanced。提出特征时说明它服务哪组错例、基于哪份证据，以及会怎样被否定。credible_features只是探索性线索。单变量不显著不等于组合无效，漏报设备低分也不等于原始数据没有信号。新特征应补充可检验的区别，不重复已有计数。
+ frame 是单设备、按实际可用时间排序的数值 DataFrame，索引为 UTC DatetimeIndex。列名以 payload 为准；当前行在该行时间已经可用。代码只返回新特征 DataFrame，原特征由程序自动保留。函数用局部赋值与 return；pd、np 已提供，不写 import。新列以 fe_ 开头。
+ 可用：Series rolling/expanding/ewm 后的 mean/sum/std/var/min/max/count/median/quantile，非负字面量 shift/diff，cumsum/cummax/cummin/cumprod，fillna(常数)/ffill/clip/abs/where/mask/isna/notna/astype/replace；np.log1p/log/exp/sqrt/abs/maximum/minimum/where/isfinite/isnan/clip/sign；pd.DataFrame。计数器负增量要考虑复位并保留标记；缺失不自动当真实零。
+ 窗口按真实时间如 rolling('24h',min_periods=1)，不同采样频率不能机械套同样行数。累计历史与近期特征可以并存。整段序列 mean/max 等会让过去使用未来，使用 expanding 或过去 rolling。保持索引与行数，避免全缺失、无限大、过量特征和不必要的巨量计算。
+@@ -15,5 +15,5 @@
+ payload.feature_api 是特征函数唯一的可执行接口定义，与检查器共享版本；严格遵守其中的函数、限制和可运行示例。尤其禁止 frame.index.to_series()、.dt、.iloc、frame.columns、pd.Series、推导式和动态选列。索引只能用于输出对齐。观测间隔用 past.gap_seconds(frame)，累计观测数用 past.observation_count(frame)，除法使用 /。不要用不存在的 pandas 方法替代这些接口。
+ 摘要来自多处 TRAIN 设备的有限前缀，column_summary 只表示样本覆盖；某字段在样本全空不代表整个数据集全空。保持测量缺失含义，不为通过检查随意填零。修复时保留 question 和 parent，针对 error 中的具体行和操作修改 source；不要重复不支持的 API。
+ 
+-本次任务见 payload 中的 instructions。可用列包含官方窗口特征与控制器解析原始 CE 日志得到的 raw_* 列（含义见 semantic_mapping/profile）；你只通过 transform(frame) 组合这些列，不读取任何外部文件。
++本次任务见 payload 中的 instructions。可用列严格由semantic_mapping/profile给出；只有内存适配器才可能提供raw_*或spatial_*。只有已经解析成数值列的信息才能被transform组合，缺失的原始结构应明确作为适配缺口；你只通过 transform(frame) 组合这些列，不读取任何外部文件。
+ 只生成少量计算成本可控的因果特征。
+--- v2/raw_cache.py
++++ v3/raw_cache.py
+@@ -19,6 +19,14 @@
+ import pyarrow.parquet as pq
+ 
+ import raw_events
++
++def representation(name):
++    require(name in ("v1","spatial_v3"), "Unknown representation")
++    if name=="spatial_v3":
++        import raw_spatial_v3
++        return raw_spatial_v3
++    return raw_events
++
+ from common import read, save, sha, digest, require
+ from history_math import verify
+ 
+@@ -36,7 +44,8 @@
+ 
+ 
+ def _shard(args):
+-    part, src, dst, raw_source, sn_names, cutoff = args
++    part, src, dst, raw_source, sn_names, cutoff, rep = args
++    raw_events = representation(rep)
+     names, load = _raw_reader(raw_source)
+     table = pq.read_table(src).to_pandas()
+     require((np.diff(table.device.to_numpy()) >= 0).all(), 'Cache rows must be sorted by device')
+@@ -61,9 +70,9 @@
+         times = table.time.to_numpy()[a:b]
+         require((np.diff(times) >= 0).all(), 'Device rows must be time-sorted')
+         extra[a:b] = raw_events.features_at(ev, times)
+-    for j, name in enumerate(raw_events.FEATURES):
++    for name in raw_events.FEATURES:
+         require(name not in table, 'Raw feature collides with official column: ' + name)
+-        table[name] = extra[:, j]
++    table = pd.concat([table, pd.DataFrame(extra, columns=raw_events.FEATURES, index=table.index)], axis=1)
+     keep = [c for c in table.columns if c not in META] + META
+     pq.write_table(pa.Table.from_pandas(table[keep], preserve_index=False), dst, compression='zstd',
+                    row_group_size=65536)
+@@ -71,7 +80,7 @@
+     return stats
+ 
+ 
+-def smoke(source_cache, raw_source, out, parts):
++def smoke(source_cache, raw_source, out, parts, rep="v1"):
+     """Process the first `parts` shards into a scratch folder (no manifest) and report stats."""
+     source_cache, out = Path(source_cache), Path(out)
+     m = verify(source_cache)
+@@ -81,30 +90,34 @@
+     files = sorted((source_cache / 'rows').glob('part-*.parquet'))[:parts]
+     tick = time.monotonic()
+     for p in files:
+-        s = _shard((p.name, str(p), str(out / p.name), str(raw_source), sn_names, m['windows']['val'][1]))
++        s = _shard((p.name, str(p), str(out / p.name), str(raw_source), sn_names, m['windows']['val'][1], rep))
+         print('SMOKE', json.dumps(s), f'{time.monotonic()-tick:.0f}s', flush=True)
+ 
+ 
+-def build(source_cache, raw_source, out, workers, final_test=False):
++def build(source_cache, raw_source, out, workers, final_test=False, rep="v1"):
+     """final_test: source_cache is the official TEST cache (test_opened); raw events up to the
+     TEST end are used, the parser and features are identical (frozen raw_events module)."""
+     source_cache, out = Path(source_cache), Path(out)
+     m = verify(source_cache)
++    raw_events = representation(rep)
++    spec_hashes = {Path(raw_events.__file__).name:sha(Path(raw_events.__file__)), 'raw_events.py':sha(Path(representation('v1').__file__))}
++    require(out.resolve()!=source_cache.resolve() and not out.resolve().is_relative_to(source_cache.resolve()), 'Output must be outside source cache')
+     require(bool(m['test_opened']) == bool(final_test), 'Cache partition does not match --final-test')
+     if (out / 'manifest.json').exists():
+         done = verify(out)
+         require(done['raw_feature_spec']['source_manifest'] == sha(source_cache / 'manifest.json'), 'Raw cache source changed')
++        require(done['raw_feature_spec'].get('representation', 'v1')==rep, 'Representation changed: use a new output directory')
++        require(done['raw_feature_spec'].get('parser_hashes')==spec_hashes, 'Parser identity differs: use a new output directory')
+         print('RAW_CACHE_REUSED', out, flush=True)
+         return done
+     tmp = out.with_name(out.name + '.partial')
+-    if tmp.exists():
+-        shutil.rmtree(tmp)
++    require(not out.exists() and not tmp.exists(), 'Output or partial cache exists; preserve it and choose a new output path')
+     (tmp / 'rows').mkdir(parents=True)
+     registry = pd.read_parquet(source_cache / 'device_metadata.parquet')
+     sn_names = registry.set_index('device').sn_name.to_dict()
+     cutoff = m['windows']['test' if final_test else 'val'][1]
+     parts = sorted((source_cache / 'rows').glob('part-*.parquet'))
+-    jobs = [(p.name, str(p), str(tmp / 'rows' / p.name), str(raw_source), sn_names, cutoff) for p in parts]
++    jobs = [(p.name, str(p), str(tmp / 'rows' / p.name), str(raw_source), sn_names, cutoff, rep) for p in parts]
+     tick = time.monotonic()
+     totals = dict(devices=0, with_raw=0, raw_events=0, raw_events_after_cutoff=0)
+     with ProcessPoolExecutor(workers) as pool:
+@@ -118,11 +131,10 @@
+         shutil.copy2(source_cache / name, tmp / name)
+     manifest = dict(m)
+     manifest['features'] = m['features'] + raw_events.FEATURES
+-    manifest['raw_feature_spec'] = dict(version=raw_events.VERSION, source_manifest=sha(source_cache / 'manifest.json'),
++    manifest['raw_feature_spec'] = dict(version=raw_events.VERSION, representation=rep, parser_hashes=spec_hashes, source_manifest=sha(source_cache / 'manifest.json'),
+                                         raw_source=str(raw_source), cutoff=cutoff, **totals,
+                                         final_test=bool(final_test), raw_events_module_sha256=sha(Path(raw_events.__file__)),
+-                                        policy='Raw events at or before each official timestamp; no raw rows at or after the '
+-                                               + ('TEST' if final_test else 'VAL') + ' end are read.')
++                                        policy='Source CSVs are read, then rows at/after the partition end are discarded before feature computation. Features use events at or before each anchor.')
+     manifest['raw_feature_descriptions'] = raw_events.mapping_features()
+     manifest['files'] = {p.relative_to(tmp).as_posix(): sha(p) for p in tmp.rglob('*.parquet')}
+     manifest['files'].update({n: sha(tmp / n) for n in ('devices.json', 'excluded.json')})
+@@ -140,8 +152,9 @@
+     p.add_argument('--workers', type=int, default=max(1, (os.cpu_count() or 2) // 2))
+     p.add_argument('--smoke-parts', type=int, default=0)
+     p.add_argument('--final-test', action='store_true')
++    p.add_argument('--representation', choices=['v1','spatial_v3'], default='v1')
+     a = p.parse_args()
+     if a.smoke_parts:
+-        smoke(a.source_cache, a.raw, a.out, a.smoke_parts)
++        smoke(a.source_cache, a.raw, a.out, a.smoke_parts,a.representation)
+     else:
+-        build(a.source_cache, a.raw, a.out, a.workers, a.final_test)
++        build(a.source_cache, a.raw, a.out, a.workers, a.final_test,a.representation)
+--- v2/raw_spatial_v3.py
++++ v3/raw_spatial_v3.py
+@@ -0,0 +1,91 @@
++"""Opt-in memory adapter: preserve v1 columns, add short-window shapes and chip-local topology.
++
++No fitted state or labels. These are selected structural descriptors, not full Multi-BSFE.
++Other device domains keep their own adapters; no DQ assumptions enter the generic controller.
++"""
++import numpy as np
++import pandas as pd
++import raw_events as base
++
++VERSION='raw_ce_spatial_v3'
++RAW_COLUMNS=base.RAW_COLUMNS
++WINDOWS={'15m':900,'1h':3600,'6h':21600}
++SHAPES=['dq_groups_max','dq_run_max','beat_groups_max','beat_run_max',
++        'row_bits_mean','row_bits_max','col_bits_mean','col_bits_max']
++LOCAL=['chip_cells','chip_rows','chip_cols','chip_banks']
++EXTRA=([f'raw_{w}_{k}' for w in ('15m','1h') for k in base.WINDOW_KEYS]+
++       [f'spatial_{w}_{k}_{op}' for w in WINDOWS for k in SHAPES for op in ('mean','max')]+
++       [f'spatial_{w}_distinct_{k}' for w in WINDOWS for k in LOCAL]+
++       [f'spatial_{w}_bit_observed_events' for w in WINDOWS])
++FEATURES=base.FEATURES+EXTRA
++
++
++def _runs(v):
++    padded=np.r_[False,v,False].astype(np.int8)
++    starts=np.flatnonzero(np.diff(padded)==1);ends=np.flatnonzero(np.diff(padded)==-1)
++    return len(starts),int((ends-starts).max()) if len(starts) else 0
++
++
++def shape(text):
++    grid=base.decode_bits(text)
++    if grid is None or not grid.any():return [np.nan]*len(SHAPES)
++    rows=[_runs(v) for v in grid];cols=[_runs(v) for v in grid.T]
++    return [max(v[0] for v in rows),max(v[1] for v in rows),
++            max(v[0] for v in cols),max(v[1] for v in cols),
++            grid.sum(1).mean(),grid.sum(1).max(),grid.sum(0).mean(),grid.sum(0).max()]
++
++
++def events(frame):
++    ordered=frame.sort_values('LogTime',key=lambda s:pd.to_numeric(s),kind='stable').reset_index(drop=True)
++    ev=base.events(ordered)
++    codes,texts=pd.factorize(ordered.burst_info.fillna('').astype(str))
++    values=np.array([shape(t) for t in texts],float).reshape(len(texts),len(SHAPES))
++    for i,name in enumerate(SHAPES):ev[name]=values[codes,i]
++    return ev
++
++
++def features_at(ev,anchors):
++    anchors=np.asarray(anchors,np.int64)
++    old=base.features_at(ev,anchors)
++    out=np.full((len(anchors),len(EXTRA)),np.nan,np.float32)
++    if ev is None or not len(ev):return np.c_[old,out]
++    t=ev.time.to_numpy(np.int64);hi=np.searchsorted(t,anchors,side='right');idx={n:i for i,n in enumerate(EXTRA)}
++    rank,bg,bank,row,col,chip=(ev[n].to_numpy() for n in ('RankId','BankgroupId','BankId','RowId','ColumnId','deviceID'))
++    # Physical locations use chip identity; unknown addresses are omitted, not merged as one location.
++    parts={'chip_cells':(rank,chip,bg,bank,row,col),'chip_rows':(rank,chip,bg,bank,row),
++           'chip_cols':(rank,chip,bg,bank,col),'chip_banks':(rank,chip,bg,bank)}
++    def sums(v,lo):
++        cs=np.r_[0.,np.cumsum(v)];return cs[hi]-cs[lo]
++    for w,width in WINDOWS.items():
++        lo=np.searchsorted(t,anchors-width,side='right');present=hi>lo
++        for name in SHAPES:
++            v=ev[name].to_numpy(float);valid=np.isfinite(v);count=sums(valid,lo)
++            mean=np.divide(sums(np.where(valid,v,0),lo),count,out=np.full(len(hi),np.nan),where=count>0)
++            out[:,idx[f'spatial_{w}_{name}_mean']]=mean
++            out[:,idx[f'spatial_{w}_{name}_max']]=base.range_reduce(v,lo,hi,np.maximum)
++        out[:,idx[f'spatial_{w}_bit_observed_events']]=sums(np.isfinite(ev.err_bits.to_numpy()),lo)
++        for name,columns in parts.items():
++            valid=np.logical_and.reduce([v>=0 for v in columns]);codes=base._codes(*columns)
++            # Invalid positions have no location identity. Count on the filtered timeline.
++            vlo=np.searchsorted(t[valid],anchors-width,side='right');vhi=np.searchsorted(t[valid],anchors,side='right')
++            count=base.window_distinct(codes[valid],vlo,vhi)
++            out[:,idx[f'spatial_{w}_distinct_{name}']]=np.where(vhi>vlo,count,np.nan)
++        if w=='6h':continue
++        prefix=f'raw_{w}_'
++        out[:,idx[prefix+'events']]=hi-lo
++        for key,colname,op in [('max_err_bits','err_bits',np.maximum),('max_dq_count','dq_count',np.maximum),
++                ('max_beat_count','beat_count',np.maximum),('min_dq_interval','min_dq_interval',np.minimum),
++                ('max_beat_interval','max_beat_interval',np.maximum)]:
++            out[:,idx[prefix+key]]=base.range_reduce(ev[colname].to_numpy(float),lo,hi,op)
++        for key,v in dict(adjacent_dq_events=ev.adjacent_dq_pairs>0,multi_dq_events=ev.dq_count>1,
++                         multi_beat_events=ev.beat_count>1,risky_events=ev.risky.fillna(0)).items():
++            out[:,idx[prefix+key]]=sums(np.asarray(v,float),lo)
++        for key,columns in dict(cells=(rank,bg,bank,row,col),rows=(rank,bg,bank,row),cols=(rank,bg,bank,col),
++                                banks=(rank,bg,bank),chips=(rank,chip)).items():
++            out[:,idx[prefix+'distinct_'+key]]=base.window_distinct(base._codes(*columns),lo,hi)
++    return np.c_[old,out].astype(np.float32)
++
++
++def mapping_features():
++    return base.mapping_features()+[dict(name=n,column=n,kind='numeric_unknown',unit=None,
++        description='Memory-only v3 causal descriptor: '+n+'; chip-local counts include deviceID; unavailable locations remain missing') for n in EXTRA]
+--- v2/rerank.py
++++ v3/rerank.py
+@@ -71,6 +71,9 @@
+ def from_raw(raw, threads=1):
+     """Plain UBJ booster bytes or a Composite blob -> CPU scorer."""
+     raw = bytes(raw)
++    if raw.startswith(b'PARALLEL1\n'):
++        from parallel_branch import from_raw as parallel_from_raw
++        return parallel_from_raw(raw, threads)
+     if not raw.startswith(MAGIC):
+         return _booster(raw, threads)
+     doc = json.loads(raw[len(MAGIC):])
+--- v2/search_step.py
++++ v3/search_step.py
+@@ -21,10 +21,12 @@
+         return
+     original=read(source/'config.json')
+     domain=original['domain']
+-    cache=Path(active_cache).resolve() if active_cache else source/'cache'
++    source_cache=Path(original.get('active_cache') or source/'cache').resolve()
++    cache=Path(active_cache).resolve() if active_cache else source_cache
+     m=read(cache/'manifest.json')
+     require(not m['test_opened'],'Need unopened TRAIN/VAL cache')
+-    require(m['windows']==read(source/'cache/manifest.json')['windows'],'Active cache must keep the source split')
++    require(cache!=session and not cache.is_relative_to(session),'Cache must remain outside the new session')
++    require(m['windows']==read(source_cache/'manifest.json')['windows'],'Active cache must keep the source split')
+     lo,hi=m['windows']['val'];mid=(lo+hi)//2
+     c=copy.deepcopy(original)
+     c.update(policy(domain))
+@@ -33,7 +35,7 @@
+     c.update({k:DEFAULTS[k] for k in V2_KEYS})
+     c.update(output_root=str(session),workspace=str(session.parent/'workspace'),active_cache=str(cache),
+         selection_window=[lo,mid],confirmation_window=[mid,hi],original_validation_window=[lo,hi],
+-        search_variant=arm['name'],sampling_reference=arm.get('sampling_reference'),
++        search_variant=arm['name'],sampling_reference=arm.get('sampling_reference',original.get('sampling_reference')),
+         rounds=600,eval_every=50,patience=4,num_threads=8,memory_limit_gb=120,
+         max_trials=14,max_agent_calls=120,max_reported_tokens=3000000,
+         max_feature_programs=6,max_features_per_program=4,max_total_features=len(m['features'])+24,
+@@ -43,7 +45,8 @@
+         instructions=arm['description'])
+     # Per-arm resource overrides (e.g. HDD needs more RAM, threads, scoring workers).
+     allowed={'memory_limit_gb','num_threads','score_workers','cv_rounds','cv_folds','max_trials','trial_timeout_seconds','feature_timeout_seconds',
+-             'rerank_allowed','max_feature_programs'}
++             'rerank_allowed','max_feature_programs','parallel_allowed','device_weight_allowed',
++             'prescreen_mode','feature_exploration_budget','contrast_max_units_per_group'}
+     require(set(arm.get('config',{}))<=allowed,'Arm config may only override resource settings')
+     c.update(arm.get('config',{}))
+     validate_config(c)
+@@ -55,7 +58,8 @@
+         dataset=read(source/'state.json')['dataset'],mapping_hash=digest(mapping),calls=0,tokens=0,
+         trials=[],best=None,pending=None,analyze_next=None,diagnostics={},feature_jobs=0,
+         experience=None,experience_tried=True,last_failure=None))
+-    inputs={str(source/n):sha(source/n) for n in ['config.json','mapping.json','cache/manifest.json']}
++    inputs={str(source/n):sha(source/n) for n in ['config.json','mapping.json']}
++    inputs[str(source_cache/'manifest.json')]=sha(source_cache/'manifest.json')
+     save(session/'bootstrap.json',dict(source=str(source),source_hashes=inputs,
+         raw_preprocessing_reused=True,model_weights_imported=False,test_opened=False,
+         selection_period=[lo,mid],confirmation_period=[mid,hi],
+--- v2/settings.py
++++ v3/settings.py
+@@ -16,10 +16,13 @@
+     # v2 evidence controls: CV on TRAIN decides acceptance; selection window only screens.
+     cv_folds=5,cv_rounds=400,cv_bootstraps=1000,acceptance='cv_paired',
+     accept_lower_bound=0.0,screen_margin=0.02,prescreen_features=True,score_workers=1,
+-    rerank_allowed=False,rerank_min_rows=100,rerank_min_positive_devices=20)
++    rerank_allowed=False,rerank_min_rows=100,rerank_min_positive_devices=20,
++    parallel_allowed=True,device_weight_allowed=True,prescreen_mode='balanced',
++    feature_exploration_budget=2,contrast_max_units_per_group=1000)
+ 
+ V2_KEYS=('cv_folds','cv_rounds','cv_bootstraps','acceptance','accept_lower_bound','screen_margin','prescreen_features','score_workers',
+-         'rerank_allowed','rerank_min_rows','rerank_min_positive_devices')
++         'rerank_allowed','rerank_min_rows','rerank_min_positive_devices',
++         'parallel_allowed','device_weight_allowed','prescreen_mode','feature_exploration_budget','contrast_max_units_per_group')
+ 
+ 
+ def policy(domain):
+@@ -49,6 +52,11 @@
+     require(type(c.get('cv_rounds',400)) is int and c.get('cv_rounds',400)>0,'Invalid cv_rounds')
+     require(-1<=c.get('accept_lower_bound',0.)<=1 and 0<=c.get('screen_margin',.02)<=1,'Invalid acceptance bounds')
+     require(type(c.get('score_workers',1)) is int and 1<=c.get('score_workers',1)<=128,'score_workers must be 1..128')
++    require(c.get('prescreen_mode','balanced') in ('balanced','strict_high'), 'Invalid prescreen_mode')
++    require(type(c.get('feature_exploration_budget',2)) is int and 0<=c.get('feature_exploration_budget',2)<=10, 'Invalid exploration budget')
++    require(type(c.get('contrast_max_units_per_group',1000)) is int and 10<=c.get('contrast_max_units_per_group',1000)<=10000, 'Invalid diagnostic sample cap')
++    for key in ('parallel_allowed','device_weight_allowed','prescreen_features'):
++        require(type(c.get(key,True)) is bool, 'Invalid '+key)
+     root=Path(c['output_root']).resolve();data=Path(c['data_dir']).resolve()
+     require(root!=data and not root.is_relative_to(data),'Session output must be outside the input dataset')
+     return c
+--- v2/skills/device-failure-experiment-loop/SKILL.md
++++ v3/skills/device-failure-experiment-loop/SKILL.md
+@@ -1,21 +1,14 @@
+ ---
+ name: device-failure-experiment-loop
+-description: Adapt a new device telemetry dataset, generate causal temporal features, and run reproducible XGBoost failure-prediction experiments with DeepSeek analysis, feature and code roles. Use for memory, HDD and new device-data sessions, evidence-based tuning, diagnosis, deployment and result interpretation.
++description: Run evidence-driven device-failure experiments with separate false-alarm and missed-fault diagnostics, bounded feature exploration, and controlled model comparisons across device domains.
+ ---
+ 
+ # Device failure experiment loop
+ 
+-Read [the workflow](references/experiment-method.md) before initiating an experiment. Use the packaged `agent.py` controller; keep its scorer and split outside generated code.
++Read [the experiment method](references/experiment-method.md) before proposing, implementing, or interpreting an experiment. The runtime injects that exact file into all three roles on every call; role-specific JSON interfaces live in prompts/.
+ 
+-1. Initialize one independent session per dataset with configurable `--data`, `--workspace`, `--domain` and task instructions. Never invent a failure definition, device ID, time unit, or observation coverage. Save an explicit missing-information request when those meanings cannot be established.
+-2. Inventory every schema variation. The feature role maps formats to normalized observations, failures and follow-up. Work locally in batches; share only headers, descriptions and bounded training-prefix examples with DeepSeek.
+-3. Fit a new baseline model. Previous-session hyperparameters and feature ideas are candidates only. Existing trees, threshold, labels and evaluation scores do not transfer automatically.
+-4. Record a knowledge prior: the feature role lists falsifiable failure-mechanism hypotheses from field semantics alone (no outcomes). Decode structured raw fields with a declared, tested parser so the agents can reach domain signals the official aggregates lose (memory: error-bit DQ/beat shape, row/column/bank/chip spread, whole-past accumulation).
+-5. Analyze metrics and error-case evidence: `high_score_contrast` shows which features separate high-score true faults from false alarms on TRAIN cross-validation units. Propose a specific control or a hypothesis-linked feature request with expected benefit and falsification condition.
+-6. Let the feature role generate a small numerical transform. Validate causal API restrictions, output alignment, finite values, prefix invariance and resources in a separate worker; pre-screen it on the parent's high-score units before training. Let the code role encode exactly the accepted training configuration.
+-7. Accept a new best only with paired device-grouped TRAIN cross-validation evidence (bootstrap interval lower bound above the configured bound, no net lost hits). The selection window screens; the later window confirms once with frozen thresholds. Record ties and failed hypotheses; preserve the best artifact.
+-8. When true faults and false alarms stay inseparable in the high-score region, decide locally before adding more global features. If contrast evidence shows credible separating features there, but adding them to the global model only ties, the signal is real yet diluted by the full-data objective: try a gated second stage trained only on the high-score region (`rerank=gated`), with a gate leaving enough of both classes. Treat it as one more hypothesis, judged by the same nested cross-validation; if it ties too, record that the separation is not learnable from the current inputs and move to labels, data or new evidence instead of stacking stages.
+-9. Resume saved sessions after interruption. Do not rerun completed model training merely because analysis or a network request failed. Diagnose resource failures before retrying.
+-10. Freeze baseline and winner, then explicitly evaluate the untouched test period. Export the small review report; retain models and caches separately on the server.
++Use the current session's scope, field descriptions, receipts and diagnostic budget. Identify whether the next experiment targets false alarms, missed faults, coverage or an interaction. Record the hypothesis, competing explanation, expected TP/FP/FN change and falsification condition.
+ 
+-Use `python agent.py --help` and the release README for commands. Schema repair is bounded; the controller logs any fallback decision explicitly. Never claim a model-generated recommendation when the controller selected it.
++Complete a change only when its accepted plan is executable, evidence is saved, old results remain traceable and independent evaluation boundaries remain intact. Distinguish structural compatibility across memory/HDD/generic inputs from demonstrated predictive improvement on actual datasets.
++
++For v3 handoff and cache migration read [the package handoff](../../README_V3_中文.md). Changed program bytes require a new session; the old code seal is never rewritten to make an old run appear compatible.
+--- v2/skills/device-failure-experiment-loop/references/experiment-method.md
++++ v3/skills/device-failure-experiment-loop/references/experiment-method.md
+@@ -6,7 +6,7 @@
+ 
+ - Memory: a timely fault occurs between prediction time + 900 seconds and prediction time + 900 + 604800 seconds, inclusive. This is the official SmartMem lead interval. The local scorer fixes a calendar cohort and actual prediction times; it is not a claim of reproducing the organizer's complete scoring service.
+ - HDD/generic: minimum lead remains 900 seconds; no maximum lead. A hit must precede a known fault in the fixed evaluation period. No upper bound does not mean an infinite label or that an unknown future outcome is healthy.
+-- Split time chronologically 60/20/20. Training labels must mature before the training boundary. Training label horizons may be 7/15/30 days; these change supervision, never the frozen evaluation rule.
++- Split time chronologically 60/20/20. Training labels must mature before the training boundary. Legal label horizons and all editable factors come only from the current scope/contract; this release keeps the label horizon fixed.
+ - Healthy evaluation devices need documented follow-up through the end of the evaluation period. Exclude unknown follow-up and report it. A known eligible faulty device without predictions remains FN. A faulty device with only mistimed alarms contributes FP and FN. Precision means TP/(TP+FP), not ordinary classification accuracy.
+ - Never use failure indicators, future outcomes, device IDs or absolute timestamps as numeric feature columns. Generated features receive one device's ordered observation history, without labels. Current-row values must have been available at that timestamp. Delayed measurements require correct availability timestamps upstream.
+ 
+@@ -14,7 +14,7 @@
+ 
+ Analysis chooses experiment/features/diagnose/stop. It returns a short actionable object, not a nested essay. The controller merges partial changes with the recorded parent and supplies the complete accepted plan to the code role. The code role must not silently reinterpret the parent or modify two independent factors.
+ 
+-Start with bounded hyperparameter controls, expand to labels and weighting, then training unit, temporal representation and alarm policy. Evidence can justify a feature request earlier. Feature programs add a few causal columns and get their own version and downstream validation experiment. Keep cumulative and recent representations available; one need not erase the other.
++Begin with the baseline and controlled experiments; choose legal factors from scope. Weight controls and complementary branches are available only when declared. Changing labels, schedules or caches requires a separately configured experiment, never an implicit scope expansion. Evidence can justify a feature request earlier. Feature programs add a few causal columns and get their own version and downstream validation experiment. Keep cumulative and recent representations available; one need not erase the other.
+ 
+ Device-day training uses one history vector per day; equal-device weights equalize each device's total training contribution. Both still use binary cross entropy on training samples. They are not a differentiable optimization of period-device F1, a rank loss, or a survival model. Label and evaluation mismatch must be discussed explicitly.
+ 
+@@ -24,22 +24,26 @@
+ 
+ - Before the first analysis, the feature role writes falsifiable failure-mechanism hypotheses from field semantics only (no labels, metrics or values). Every feature request names the hypothesis it tests.
+ - Structured raw fields (memory: burst_info bitmaps and DRAM addresses) are decoded by a declared, unit-tested parser into causal numeric columns at the official timestamps; labels, cohorts and scoring are unchanged. Devices without raw logs keep missing values, never zeros.
+-- Error-case evidence (`high_score_contrast`) compares high-score true faults with false alarms on TRAIN cross-validation out-of-fold units, per feature AUC with bootstrap intervals. A proposed feature program is first pre-screened on the parent's high-score units; if no new column separates TP from FP, it is not trained and the evidence returns to the agents.
++- Error-case evidence has two routes: `high_score_contrast` for TP/healthy FP, `missed_fault_contrast` for FN/TN. `error_atlas` returns both and decomposes FN into no timely schedule, no timely score, and scored below threshold. Outside-window alarms overlap FN and can count as FP too.
++- Diagnostic snapshots are retrospective summaries at relevant decision times, not causal feature attribution or deployable sample selection rules. Outcome labels never enter generated features. Diagnostics use bounded TRAIN OOF units; intervals resample devices jointly across periods. Rankings are exploratory and not corrected for multiple comparisons.
++- Balanced prescreen permits a model fit when either contrast has a signal. For absent marginal signal, a hypothesis-linked feature request can include `exploration_reason` (interaction, missed-fault evidence, weak coverage), using a bounded session-wide exploration slot. Slots are persistent and resume-idempotent. Strict-high mode is a controlled baseline; it uses only high-score evidence.
++- Lack of marginal separation, a confidence interval crossing zero/0.5, or low model scores is insufficient evidence for a data information ceiling. Distinguish no opportunity from no score, and no useful learned representation from no raw signal.
+ 
+-## Local separation when TP and FP overlap
++## Choose an experiment from the failure mode (v3)
+ 
+-A credible univariate difference between high-score true faults and false alarms (AUC interval above 0.5) does not imply a global model gains from that column: the signal may already be in the inputs, duplicated by correlated columns, or too small a share of the full-data loss to shape the trees. Diagnose in this order:
++1. Name the target errors and an alternative explanation. Reference existing diagnostics before requesting more. A high-score diagnostic alone cannot describe the low-score missed-fault population.
++2. For false alarms, consider causal features, permitted device weights, or gated reranking. Gated reranking only refines the primary high-score region; it cannot directly rescue ungated rows.
++3. For missed faults, check coverage first, then inspect missed-fault features and interactions. When permitted, `rerank=parallel` adds an independent all-retained-training-row branch. It uses depth-2 XGBoost, total weight one per device, sqrt class imbalance weight, and row-score max fusion. Both branches score every row. This is a generic combined architecture experiment, NOT the paper's DIMM-centric rule tree and NOT guaranteed to improve. The input is the current numeric observation row, which may already be aggregated.
++4. A parallel trial uses a single-stage parent with identical representation and primary recipe. Its auxiliary fit excludes the held-out device fold; the primary fold model also excluded those devices. Full training uses the frozen full-data parent. Compare recovered hits/lost hits and added/removed false alarms with both the parent and best. Branch weights and fusion are fixed, not tuned using TEST.
++5. If information was lost during adaptation, propose a new versioned cache control. The optional memory-only `raw_cache.py --representation spatial_v3` adds short windows, event-shape summaries and chip-local locations while retaining v1 columns. Reuse the same devices/timestamps/splits; first smoke-test resource cost. Other domains need their own semantic adapters; no automatic physical interpretation of a generic numeric table.
++6. A pure `base_weight` control is available when declared in scope. Parallel-branch gains cannot separately establish the benefit of device weighting. No gate or model family is required for every device domain.
+ 
+-1. Contrast first: which columns separate high-score TP from FP, with intervals.
+-2. Global feature attempt: add a hypothesis-linked feature; if paired CV ties and the trial removes false alarms while losing hits, the trade-off, not absence of signal, is the finding.
+-3. Local model: a gated second stage trained only on TRAIN rows whose out-of-fold stage-1 score passes the gate, so its objective is exactly TP-vs-FP in that region. Every gated row still outranks every ungated row; scoring rules are unchanged. Cross-validation gates each outer fold with nested out-of-fold scores so no fold sees its own labels.
+-4. Stop rule: if the gated stage also ties, record it and change the evidence (labels, horizon, new data sources) rather than adding further stages. Too few gated rows is reported as a failed attempt with the counts; lower the gate.
++## Acceptance (v3)
+ 
+-## Acceptance (v2)
+ 
+ - Device-grouped, fault-stratified K-fold cross-validation inside TRAIN: each held-out device is scored on consecutive TRAIN periods with the frozen cohort, schedule, aggregation and lead rules. Out-of-fold (period, device) units are pooled; step and threshold are chosen on the pooled units.
+ - The selection half of VAL only screens: a challenger clearly worse there (beyond the screen margin) is not cross-validated.
+-- Best changes only when the paired, fault-stratified bootstrap 95% interval of pooled CV F1 versus the current best has its lower end above the configured bound and net hits are not lost. An interval crossing the bound is a tie, recorded as evidence.
++- Best changes only when the paired, device-cluster bootstrap 95% interval (all periods of a device resampled together; stratified by ever-fault status) of pooled CV F1 versus the current best has its lower end above the configured bound and net hits are not lost. An interval crossing the bound is inconclusive under this rule, not proof of equivalence. CV is reused for proposing features and choosing checkpoints/thresholds; these intervals are search evidence, not independent post-selection guarantees. Confirmation uses its frozen protocol and TEST remains outside exploration.
+ - The later VAL half is touched once, after search, with frozen thresholds; TEST stays separate.
+ 
+ ## Evidence and stopping
+--- v2/tests/test_v3.py
++++ v3/tests/test_v3.py
+@@ -0,0 +1,207 @@
++"""v3 behavior: recoverable FN signals, exploration limits, causal topology and independent fits."""
++import copy
++import tempfile
++import unittest
++from pathlib import Path
++from unittest.mock import patch
++import numpy as np
++import pandas as pd
++from common import save,read,sha,digest
++from experiment_contract import initial_plans,validate_recipe
++from settings import DEFAULTS,policy
++import contrast
++import raw_events
++import raw_spatial_v3 as spatial
++import parallel_branch as branch
++import rerank
++import crossval
++
++
++class Evidence(unittest.TestCase):
++    def test_recall_only_feature_is_not_rejected(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            root=Path(tmp);rows=[]
++            for d in range(40):
++                group=d//10
++                rows.append(dict(device=d,period=0,step=2,positive=group in (0,2),
++                    max_score=.9 if group<2 else .1,max_hit_score=(.9 if group==0 else .1) if group in (0,2) else np.nan,
++                    timely_prediction_opportunities=1,decision_time=100))
++            oof=pd.DataFrame(rows);oof.to_parquet(root/'oof.parquet')
++            save(root/'oof_complete.json',dict(best_step=2,cv_metrics={'threshold':.5},oof_sha256=sha(root/'oof.parquet')))
++            def snapshot(c,units,names):
++                return pd.DataFrame({'signal':np.where(units.device.between(20,29),1.,0.)},index=units.index)
++            with patch.object(contrast,'feature_snapshot',snapshot):
++                screen=contrast.prescreen(DEFAULTS,root,['signal'])
++            self.assertFalse(screen['high_score']['credible_features'])
++            self.assertEqual(screen['missed_faults']['credible_features'],['signal'])
++            self.assertTrue(contrast.screen_decision(screen,DEFAULTS,{},[])['train'])
++            self.assertFalse(contrast.screen_decision(screen,dict(DEFAULTS,prescreen_mode='strict_high'),{},[])['train'])
++
++    def test_exploration_requires_reason_is_bounded_and_resume_idempotent(self):
++        screen={'prescreen_passed':False,'high_score':{'credible_features':[]}}
++        request={'job':'job_1','target':'interaction','exploration_reason':'conditional pattern hypothesis'}
++        c=dict(DEFAULTS,feature_exploration_budget=1)
++        self.assertFalse(contrast.screen_decision(screen,c,{},[])['train'])
++        self.assertEqual(contrast.screen_decision(screen,c,request,[])['route'],'exploration')
++        self.assertTrue(contrast.screen_decision(screen,c,request,['job_1'])['train'])
++        self.assertFalse(contrast.screen_decision(screen,c,dict(request,job='job_2'),['job_1'])['train'])
++
++    def test_fn_causes_and_late_alarm_overlap(self):
++        u=pd.DataFrame(dict(step=[2]*5,positive=[True]*4+[False],
++            max_score=[np.nan,np.nan,.2,.9,.1],max_hit_score=[np.nan,np.nan,.2,.2,np.nan],
++            timely_prediction_opportunities=[0,2,2,2,0]))
++        c=contrast.error_counts(u,2,.5)
++        self.assertEqual((c['FN'],c['FP'],c['TN']),(4,1,1))
++        self.assertEqual((c['fn_no_timely_clock'],c['fn_no_timely_score'],c['fn_scored_below_threshold']),(1,1,2))
++        self.assertEqual(c['fn_with_outside_window_alarm'],1)
++
++    def test_empty_groups_are_evidence_not_an_exception(self):
++        with tempfile.TemporaryDirectory() as tmp:
++            p=Path(tmp);u=pd.DataFrame(dict(device=[0],period=[0],step=[2],positive=[False],max_score=[.1],
++                max_hit_score=[np.nan],timely_prediction_opportunities=[0],decision_time=[1]))
++            u.to_parquet(p/'oof.parquet');save(p/'oof_complete.json',dict(best_step=2,cv_metrics={'threshold':.5}))
++            ev=contrast.contrast(DEFAULTS,['x'],p)
++            self.assertEqual(ev['tp_units'],0);self.assertFalse(ev['credible_features'])
++
++
++def frame(times,patterns,chips=None):
++    n=len(times)
++    return pd.DataFrame(dict(LogTime=times,burst_info=patterns,RankId=[0]*n,BankgroupId=[0]*n,
++        BankId=[0]*n,RowId=[1]*n,ColumnId=[1]*n,deviceID=chips or [0]*n,error_type_full_name=['READ']*n))
++
++
++class Spatial(unittest.TestCase):
++    def test_chip_identity_short_windows_and_future_prefix(self):
++        f=frame([100,200,4000],["{'0':[0]}","{'0':[4]}","{'0':[0,1,2,3] }"],[0,1,0])
++        anchors=np.array([200,1000,4000])
++        ev=spatial.events(f);x=spatial.features_at(ev,anchors)
++        def col(name):return x[:,spatial.FEATURES.index(name)]
++        self.assertEqual(col('raw_6h_distinct_cells')[0],1)
++        self.assertEqual(col('spatial_15m_distinct_chip_cells')[0],2)
++        self.assertEqual(col('raw_15m_events')[1],1) # interval is (anchor-window,anchor]
++        before=spatial.features_at(spatial.events(f.iloc[:2]),anchors[:2])
++        np.testing.assert_equal(before,x[:2])
++        np.testing.assert_equal(x[:,:len(raw_events.FEATURES)],raw_events.features_at(raw_events.events(f),anchors))
++
++    def test_shape_difference_and_missing(self):
++        a=spatial.shape("{'0':[0,1], '3':[2,3]}")
++        b=spatial.shape("{'0':[0], '1':[1], '2':[2], '3':[3]}")
++        self.assertNotEqual(a,b)
++        ev=spatial.events(frame([100],['']))
++        x=spatial.features_at(ev,[100])
++        self.assertTrue(np.isnan(x[0,spatial.FEATURES.index('spatial_15m_dq_run_max_max')]))
++        self.assertEqual(x[0,spatial.FEATURES.index('spatial_15m_bit_observed_events')],0)
++
++    def test_cache_representation_roundtrip_and_refuses_wrong_reuse(self):
++        from tests.test_rerank import fixture
++        from raw_cache import build
++        with tempfile.TemporaryDirectory() as tmp:
++            root=Path(tmp);c,m=fixture(root,n=6);raw=root/'raw';raw.mkdir()
++            frame([1704067200+100],["{'0':[0]}"]).to_csv(raw/'0.csv',index=False)
++            out=root/'new_cache'
++            r=build(c['active_cache'],raw,out,1,rep='spatial_v3')
++            self.assertIn('spatial_15m_distinct_chip_cells',r['features'])
++            self.assertEqual(build(c['active_cache'],raw,out,1,rep='spatial_v3')['features'],r['features'])
++            with self.assertRaises(ValueError):build(c['active_cache'],raw,out,1,rep='v1')
++
++
++class Independent(unittest.TestCase):
++    def test_no_gate_and_serialization(self):
++        from tests.test_rerank import booster
++        a,b=booster(1),booster(8);model=branch.Parallel(a,b)
++        x=np.random.default_rng(1).random((200,2)).astype(np.float32)
++        p,q=a.inplace_predict(x),b.inplace_predict(x)
++        self.assertTrue((q>p).any())
++        np.testing.assert_equal(model.inplace_predict(x),np.maximum(p,q))
++        np.testing.assert_equal(rerank.from_raw(model.save_raw()).inplace_predict(x),model.inplace_predict(x))
++        # A low primary score is still promoted; no primary-score gate exists.
++        class Scores:
++            def __init__(self,v):self.v=v
++            def inplace_predict(self,x,iteration_range=(0,0)):return np.full(len(x),self.v)
++        np.testing.assert_equal(branch.Parallel(Scores(.1),Scores(.9)).inplace_predict(x),np.full(len(x),.9))
++
++    def test_held_out_poison_does_not_change_auxiliary(self):
++        rng=np.random.default_rng(7);x=rng.random((400,2)).astype(np.float32);y=(x[:,0]>.5).astype(np.uint8)
++        w=np.ones(400,np.float32);dev=np.repeat(np.arange(40),10);folds=dev%4
++        c=dict(DEFAULTS,device='cpu',num_threads=1);recipe=dict(initial_plans()[0],rerank='parallel')
++        a=branch.fold_auxiliary(x,y,w,dev,folds,2,recipe,c,4)
++        x[folds==2]=9;y[folds==2]=1-y[folds==2];w[folds==2]=1000
++        b=branch.fold_auxiliary(x,y,w,dev,folds,2,recipe,c,4)
++        self.assertEqual(bytes(a.save_raw()),bytes(b.save_raw()))
++        self.assertAlmostEqual(branch.balance(np.array([3.,1.,2.]),np.array([1,1,2]))[:2].sum(),1.)
++
++    def test_parallel_real_fit_cv_reload_memory_and_hdd(self):
++        from tests.test_rerank import fixture
++        from xgb_runner import run
++        from prediction import predict
++        from history_store import checked_manifest
++        for domain in ('memory','hdd'):
++            with self.subTest(domain=domain),tempfile.TemporaryDirectory() as tmp:
++                root=Path(tmp);c,m=fixture(root);c.update(policy(domain));c['domain']=domain
++                base=initial_plans()[0];parent=root/'parent';run(c,base,parent)
++                crossval.oof_tables(c,base,root/'parent_cv',k=3)
++                recipe=dict(base,rerank='parallel');validate_recipe(recipe)
++                out=root/'parallel';res=run(c,recipe,out,stage1_model=parent,stage1_cv=root/'parent_cv')
++                self.assertTrue(res['sample_audit']['parallel']['all_training_rows'])
++                cv=branch.oof_tables(c,recipe,root/'parallel_cv',root/'parent_cv')
++                self.assertGreater(cv['fault_units'],0)
++                paired=crossval.paired_cv(root/'parallel_cv',root/'parent_cv',20)
++                self.assertIn('new_hits',paired)
++                model=rerank.load_model(out/'model.ubj');m=checked_manifest(c)
++                a,sa=predict(model,dict(c,score_workers=1),recipe,m,'val',res['metrics']['threshold'])
++                b,sb=predict(model,dict(c,score_workers=2),recipe,m,'val',res['metrics']['threshold'])
++                pd.testing.assert_frame_equal(a,b);self.assertEqual(sa,sb)
++
++
++class Controller(unittest.TestCase):
++    def test_initialize_reuses_active_cache_without_touching_old_session(self):
++        from tests.test_v2_loop import fixture
++        from search_step import initialize
++        from agent import Loop
++        with tempfile.TemporaryDirectory() as tmp:
++            root=Path(tmp);old,c=fixture(root)
++            before={name:sha(old/name) for name in ('config.json','state.json','code_seal.json')}
++            new=root/'new_session'
++            initialize(old,new)
++            loop=Loop(new)
++            self.assertEqual(loop.c['active_cache'],c['active_cache'])
++            self.assertEqual(loop.scope()['feature_screen']['mode'],'balanced')
++            self.assertTrue(loop.scope()['parallel']['allowed'])
++            self.assertEqual(loop.s['trials'],[])
++            self.assertEqual(before,{name:sha(old/name) for name in before})
++
++    def test_real_loop_diagnostics_exploration_and_parallel(self):
++        from tests.test_v2_loop import fixture,Mock
++        from agent import Loop
++        with tempfile.TemporaryDirectory() as tmp:
++            session,c=fixture(Path(tmp));c.update(max_trials=4,feature_exploration_budget=1)
++            save(session/'config.json',c);state=read(session/'state.json');state['config_hash']=digest(c);save(session/'state.json',state)
++            class Agent(Mock):
++                def call(self,role,payload,folder,**kw):
++                    if role!='analysis':return super().call(role,payload,folder,**kw)
++                    save(Path(folder)/'usage.json',{'total_tokens':5})
++                    n=sum(t['status']=='complete' for t in payload['history'])
++                    if n==1 and not payload['evidence']:
++                        return dict(action='diagnose',parent='trial_001',kind='error_atlas',question='Both kinds of errors?',reason='Compare mechanisms')
++                    if n==1:
++                        return dict(action='experiment',parent='trial_001',changes={'base_weight':'device'},reason='Device dominance',hypothesis='Repeated devices dominate',expected='Fewer false alarms',falsification='No paired improvement')
++                    if n==2:
++                        return dict(action='features',parent='trial_001',hypothesis_id='H1',question='Conditional pattern?',reason='Interaction control',target='interaction',
++                            expected='Recover misses',falsification='No gain',exploration_reason='Test whether marginal rejection is too restrictive')
++                    return dict(action='experiment',parent='trial_001',changes={'rerank':'parallel'},reason='Complement misses',hypothesis='Another objective finds different faults',expected='New hits exceed added alarms',falsification='No paired gain')
++            fake=Agent();loop=Loop(session,fake);loop.run()
++            self.assertEqual(len(loop.s['trials']),4)
++            self.assertEqual(loop.s['feature_explorations'],['job_001'])
++            self.assertEqual(read(session/'feature_jobs/job_001/screen_decision.json')['route'],'exploration')
++            self.assertIn('recall',read(session/'diagnostics/trial_001/error_atlas/evidence.json')['contrast'])
++            feature_payload=fake.payloads[('feature','features')][0]
++            self.assertEqual(feature_payload['target'],'interaction');self.assertTrue(feature_payload['error_evidence'])
++            trial=loop.s['trials'][-1]
++            self.assertEqual(trial['recipe']['rerank'],'parallel')
++            self.assertEqual(trial['status'],'complete')
++            self.assertIn(trial['acceptance']['rule'],('cv_paired','screened_out'))
++            self.assertTrue((loop.folder(trial)/'model.ubj').read_bytes().startswith(branch.MAGIC))
++            self.assertFalse((session/'cache_test').exists())
++
++
++if __name__=='__main__':unittest.main()
+--- v2/tests/test_workflow.py
++++ v3/tests/test_workflow.py
+@@ -7,6 +7,7 @@
+ import numpy as np
+ import pandas as pd
+ from common import save,read,sha,DAY
++from data_ingest import normalize
+ from agent import Loop,create_session,receipt,freeze,final_test,export_report,update_limits
+ from data_ingest import frames,seconds,validate_mapping,ids
+ from experiment_contract import initial_plans,source_for,training_identity
+@@ -65,7 +66,7 @@
+         t=payload['current'];n=sum(x['status']=='complete' for x in payload['history'])
+         common=dict(parent=t['id'],reason='Offline test control')
+         if n==1 and not payload['evidence']:return dict(common,action='diagnose',kind='coverage',question='Are faults missing scores?')
+-        if n==1:return dict(common,action='features',question='Is the metric rising abruptly?',expected='More timely hits',falsification='No validation device-F1 gain')
++        if n==2:return dict(common,action='features',question='Is the metric rising abruptly?',expected='More timely hits',falsification='No validation device-F1 gain')
+         return dict(common,action='experiment',changes={'params.learning_rate':.05},hypothesis='A slower rate changes ranking',expected='Validation improvement',falsification='No improvement')
+ 
+ 
+@@ -101,7 +102,9 @@
+         a=initial_plans()[0];b=copy.deepcopy(a);b['score_aggregation']='window_mean'
+         self.assertEqual(training_identity(a),training_identity(b))
+         b['feature_program']='a'*64;self.assertNotEqual(training_identity(a),training_identity(b))
+-        b=copy.deepcopy(a);b['label_horizon_days']=15;self.assertNotEqual(training_identity(a),training_identity(b))
++        b=copy.deepcopy(a);b['base_weight']='device';self.assertNotEqual(training_identity(a),training_identity(b))
++        b['label_horizon_days']=15
++        with self.assertRaises(ValueError):training_identity(b)
+ 
+     def test_formats_and_ids(self):
+         with tempfile.TemporaryDirectory() as tmp:
+@@ -120,9 +123,9 @@
+         with tempfile.TemporaryDirectory(prefix='dfa_') as tmp:
+             root=Path(tmp);mapping=fixture(root/'data',domain);fake=FakeDeepSeek(mapping)
+             cfg=root/'runtime.json';save(cfg,dict(device='cpu',num_threads=1,memory_limit_gb=2,rounds=3,
+-                eval_every=1,patience=2,max_trials=3,min_free_disk_gb=.01,comparison_bootstraps=10))
++                eval_every=1,patience=2,max_trials=3,min_free_disk_gb=.01,comparison_bootstraps=10,acceptance='selection_f1'))
+             session=create_session(root/'data',root/'work',domain,'Synthetic fixture',cfg,provider=fake)
+-            loop=Loop(session,fake);fake.fail_analysis_once=True
++            loop=Loop(session,fake);normalize(loop.c,mapping,loop.s['dataset']);fake.fail_analysis_once=True
+             with self.assertRaisesRegex(RuntimeError,'disconnected'):loop.run()
+             saved_baseline=sha(loop.folder(loop.s['trials'][0])/'model.ubj')
+             loop=Loop(session,fake);loop.run()
+@@ -130,7 +133,7 @@
+             self.assertEqual([t['status'] for t in loop.s['trials']],['complete']*3)
+             self.assertEqual({r for r,t in fake.calls},{'feature','analysis','code'})
+             self.assertEqual(loop.s['feature_jobs'],1)
+-            feature=loop.s['trials'][1];self.assertNotEqual(feature['recipe']['feature_program'],'base')
++            feature=loop.s['trials'][2];self.assertNotEqual(feature['recipe']['feature_program'],'base')
+             self.assertIn('fe_rise',receipt(loop.folder(feature))['features'])
+             self.assertTrue((session/'feature_jobs/job_001/progress.json').exists())
+             before=len(fake.calls);models=[sha(loop.folder(t)/'model.ubj') for t in loop.s['trials']]
+@@ -143,19 +146,18 @@
+             self.assertIsNotNone(loop.s['trials'][-1]['model_reused_from'])
+             self.assertTrue(export_report(loop).exists())
+             # Exercise freezing a generated feature chain too; these toy candidates tie on validation.
+-            self.assertEqual(feature['metrics']['f1'],loop.trial(loop.s['best'])['metrics']['f1'])
+             loop.s['best']=feature['id'];loop.commit()
+-            freeze(loop);reports=final_test(loop);self.assertTrue(reports)
+-            self.assertEqual(len(reports),2)
+-            self.assertEqual(loop.s['status'],'tested')
+-            self.assertTrue(all(r['report']['primary']['protocol']==policy(domain)['evaluation_protocol'] for r in reports))
++            freeze(loop)
++            with self.assertRaisesRegex(RuntimeError,'TEST disabled'):final_test(loop)
++            self.assertEqual(loop.s['status'],'frozen')
++            self.assertFalse((session/'cache_test').exists())
+             self.assertEqual(len(fake.calls),before+1)
+             # A different dataset gets a new session and a fresh baseline, only recipe experience travels.
+             mapping2=fixture(root/'newdata',domain)
+             second=create_session(root/'newdata',root/'work',domain,'Different input',cfg,provider=FakeDeepSeek(mapping2))
+             other=Loop(second,FakeDeepSeek(mapping2));self.assertNotEqual(session,second)
+             self.assertEqual(other.s['trials'],[]);self.assertIsNotNone(other.s['experience'])
+-            other.prepare();other.queue(initial_plans()[0]);other.train()
++            normalize(other.c,mapping2,other.s['dataset']);other.prepare();other.queue(initial_plans()[0]);other.train()
+             self.assertIsNone(receipt(other.folder(other.s['trials'][0]))['model_reused_from'])
+ 
+     def test_handoff_fallback_scope_and_resource_limits(self):
+@@ -172,10 +174,11 @@
+             with self.assertRaises(ValueError):loop.check_action(dict(good,changes={'maximum_lead_seconds':999}))
+             with self.assertRaises(ValueError):loop.check_action(dict(good,parent='from_another_session'))
+             self.assertEqual(loop.fallback('bad JSON')['action'],'experiment')
+-            self.assertEqual(loop.scope()['level'],0)
++            self.assertEqual(loop.scope()['level'],2)
++            self.assertIn('base_weight',loop.scope()['allowed_changes'])
+             for i in range(3):loop.s['trials'].append(dict(id=f'control_{i}',recipe=base,status='complete',metrics={'f1':.19}))
+-            self.assertEqual(loop.scope()['level'],1)
+-            self.assertIn('label_horizon_days',loop.scope()['allowed_changes'])
++            self.assertEqual(loop.scope()['level'],2)
++            self.assertNotIn('label_horizon_days',loop.scope()['allowed_changes'])
+             before=loop.c['evaluation_protocol'];update_limits(loop,dict(max_agent_calls=200,trial_timeout_seconds=14400))
+             self.assertEqual(Loop(session,fake).c['evaluation_protocol'],before)
+             with self.assertRaises(ValueError):update_limits(loop,{'maximum_lead_seconds':0})
+@@ -190,18 +193,18 @@
+         with tempfile.TemporaryDirectory(prefix='dfa_history_') as tmp:
+             root=Path(tmp);mapping=fixture(root/'data','hdd');fake=FakeDeepSeek(mapping)
+             cfg=root/'runtime.json';save(cfg,dict(device='cpu',num_threads=1,memory_limit_gb=2,rounds=2,
+-                eval_every=1,patience=2,min_free_disk_gb=.01,comparison_bootstraps=5))
++                eval_every=1,patience=2,min_free_disk_gb=.01,comparison_bootstraps=5,acceptance='selection_f1'))
+             session=create_session(root/'data',root/'work','hdd','Test',cfg,provider=fake)
+-            loop=Loop(session,fake);loop.prepare()
++            loop=Loop(session,fake);normalize(loop.c,mapping,loop.s['dataset']);loop.prepare()
+             r=initial_plans()[0];r.update(sample_unit='device_day',feature_set='history',score_aggregation='latest',base_weight='device')
+             loop.queue(r);loop.train();first=loop.s['trials'][0]
+             result=receipt(loop.folder(first));self.assertEqual(len(result['features']),9)
+             self.assertEqual(result['sample_audit']['weight_definition'],'each device total base weight = 1')
+-            r=copy.deepcopy(r);r.update(feature_set='recent',label_horizon_days=15,weight_policy='sqrt_ratio')
++            r=copy.deepcopy(r);r.update(feature_set='recent',weight_policy='sqrt_ratio')
+             loop.queue(r,first['id'],'Temporal representation/weight integration test');loop.train()
+             result=receipt(loop.folder(loop.s['trials'][1]));self.assertEqual(len(result['features']),13)
+             self.assertIsNone(result['model_reused_from'])
+-            self.assertLess(result['sample_audit']['training_samples'],receipt(loop.folder(first))['sample_audit']['training_samples'])
++            self.assertEqual(result['sample_audit']['training_samples'],receipt(loop.folder(first))['sample_audit']['training_samples'])
+             loop.diagnostic(dict(parent=first['id'],kind='score_distribution',question='Handle empty FP/FN groups'))
+             self.assertTrue((session/'diagnostics/trial_001/score_distribution/evidence.json').exists())
+ 
+--- v2/xgb_runner.py
++++ v3/xgb_runner.py
+@@ -85,9 +85,12 @@
+             val_period_unweighted_bce=stats['val_period_unweighted_bce'],**metric)])
+         grid.to_csv(out/'threshold_search_val.csv',index=False,float_format='%.17g')
+         actual='reused';print('Frozen-model control: no retraining; parent='+str(parent_model),flush=True)
+-    elif recipe.get('rerank','none')=='gated':
++    elif recipe.get('rerank','none') in ('gated','parallel'):
+         require(stage1_model and stage1_cv,'Gated rerank needs --stage1-model and --stage1-cv')
+-        from rerank import train_full
++        if recipe['rerank']=='parallel':
++            from parallel_branch import train_full
++        else:
++            from rerank import train_full
+         best,audit,params,actual,t=train_full(c,recipe,m,out,stage1_model,stage1_cv)
+         feature_seconds,training_seconds,inference_seconds=t['feature_and_matrix_seconds'],t['boost_updates_seconds'],t['validation_prediction_seconds']
+         save(out/'sample_audit.json',audit);save(out/'resolved_parameters.json',params)

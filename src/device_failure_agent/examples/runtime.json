@@ -1,0 +1,9 @@
+{
+  "device": "cuda:0",
+  "memory_limit_gb": 32,
+  "num_threads": 8,
+  "max_trials": 24,
+  "analysis_model": "deepseek-v4-pro",
+  "feature_model": "deepseek-v4-pro",
+  "code_model": "deepseek-v4-pro"
+}

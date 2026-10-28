@@ -1,0 +1,178 @@
+{
+  "baseline": "C:\\Users\\38104\\autodl_v2\\runtime",
+  "changes": [
+    {
+      "file": "README_V3_中文.md",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "8ea2dd1aeb2e61772d00d1fd6820ef76f6035b8ec8414f8e32c71060b5f6ca10"
+    },
+    {
+      "file": "agent.py",
+      "status": "modified",
+      "before_sha256": "8ed6dab848af3edd6e1ac88efe68fe80befd6c76c47ce7c4d10af693819cf094",
+      "after_sha256": "4567b786e1f477f6f503328ada666398c514c9df9189679def3ec2e7d4ed618a"
+    },
+    {
+      "file": "arm_policy.json",
+      "status": "modified",
+      "before_sha256": "84066d70aa18f694100e6948039e35e577700890dec8f419984f9224d89c423c",
+      "after_sha256": "848711e19da391aad2791226dac3fb08346518d8028a653480bc2ab9cfcba8cc"
+    },
+    {
+      "file": "contrast.py",
+      "status": "modified",
+      "before_sha256": "2213c4d2627fe19b32b6c6da002860e868419dce3132acbc0d587ce98d1f07a6",
+      "after_sha256": "15798997cebd6ee33f998a6aa44dfc9ffbe2e9062593fc3b1b824d1acbc5290a"
+    },
+    {
+      "file": "crossval.py",
+      "status": "modified",
+      "before_sha256": "b8fc1db19de7edee96ad142926622f8381947308b6eca276848893b3589382c2",
+      "after_sha256": "1dafe29bf43e7bcd736c9f8c7b91d6188389221df11bd9f0e9dc0dcb661b3936"
+    },
+    {
+      "file": "experiment_contract.py",
+      "status": "modified",
+      "before_sha256": "802dc3f68f78397b7a045f549a3697dba5890e4aadaeb3d235879c85787ebc94",
+      "after_sha256": "f755685254286c35aaf7231064bd9176b34bde12d78aa36caba1be6df6d63e16"
+    },
+    {
+      "file": "parallel_branch.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "a935183f336928b4d9cb1feb38e5ae229519c323dc2f093a63087a44c1face41"
+    },
+    {
+      "file": "prompts/analysis.txt",
+      "status": "modified",
+      "before_sha256": "e2e7606b4219defedb0ac0fe6ad104bebcb643bbcbd1e19923f5581a5c9837fc",
+      "after_sha256": "78326775686a52270fd3944009e73bdf2f9bbdc10ddb1710764f301adeaa4549"
+    },
+    {
+      "file": "prompts/feature.txt",
+      "status": "modified",
+      "before_sha256": "5dfbd83e3e2ca046d5307c24b447828ca7d48728b57e769d131efc2c34bfffeb",
+      "after_sha256": "12cd1fcf63de5ee4f4a133f06c8ae948564f3895ebe8bd1496489fbe9e806c08"
+    },
+    {
+      "file": "raw_cache.py",
+      "status": "modified",
+      "before_sha256": "5c8ef1a8cf28198be732bc3ef080ba8e0e744c2c448fefd6a5756f5ff5f393d2",
+      "after_sha256": "c298eea675fd32996c322a7907d501586be9ee20de5703113f3b8264ed7efa50"
+    },
+    {
+      "file": "raw_spatial_v3.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "70e061afbb817d80e6343c7295bffe761cf2b9c184c4dec57e6f2af38aa06c03"
+    },
+    {
+      "file": "rerank.py",
+      "status": "modified",
+      "before_sha256": "6c8544915f29afda1b3c1bd6d86425a509f13d775ec0dbe5a87c47e7b2cc644f",
+      "after_sha256": "910f4cd72a25d039a5914fb798ad7703a4bab97796003d12a52c8bc6dbfa5468"
+    },
+    {
+      "file": "search_step.py",
+      "status": "modified",
+      "before_sha256": "258397e283ecc041cdf3022455d341c6cfb7fcfa9aa7a6f9f0585e8f89222ed0",
+      "after_sha256": "31509660a25dd1628e137faab583014cc246f6ace17a0d6bbee295965520fe6e"
+    },
+    {
+      "file": "settings.py",
+      "status": "modified",
+      "before_sha256": "a950a53464ff767b2e2c764a24c78fb5ad0b18713be9fa7ad681e88ed985f194",
+      "after_sha256": "a190b3ed9c9439933b6861b4cc6cfaa5abc8b184fcc9274f586d2c57362d9da0"
+    },
+    {
+      "file": "skills/device-failure-experiment-loop/SKILL.md",
+      "status": "modified",
+      "before_sha256": "5dddb0348931369ac23332895f1b1f00324074b8f02b2e676f7fa471728b481e",
+      "after_sha256": "360fc4224b15f1bf00278b8ae6193031b3b5644a13a369be91a1977d74e21340"
+    },
+    {
+      "file": "skills/device-failure-experiment-loop/references/experiment-method.md",
+      "status": "modified",
+      "before_sha256": "3680886143ccb3650bc980af360061c276b69eeb9604a3f0a93c69d721cb34af",
+      "after_sha256": "032c6567a2909ba15ea9f189100680b4f8d00915d865a1b32f757bf3b4f4f5fb"
+    },
+    {
+      "file": "tests/test_v3.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "093a49020b1ea7383fa6f9ce3e279c3c2c92c8a874104c24bc66a8fd0750ac70"
+    },
+    {
+      "file": "tests/test_workflow.py",
+      "status": "modified",
+      "before_sha256": "3c4d6bca13118a8c0c33c9abc47054e2214a3813702c1373977cc302281a84d5",
+      "after_sha256": "051441dac3738c123e28696c333907a561712f11bd53fb0aaeb009c64b84f19b"
+    },
+    {
+      "file": "xgb_runner.py",
+      "status": "modified",
+      "before_sha256": "4cd3ff0fe0228bbbe25ac9548628958d8d5b768690b658b679a5c7f906ed3ed8",
+      "after_sha256": "790b728517ad6bd89f9ccdb634ea61fa48e52a1330eed07a52b9bac8429aab98"
+    }
+  ],
+  "baseline_files": {
+    ".gitignore": "81d8376fa5abd023bab91124e67325182d70e8007425b32115c8dd64d9ca769d",
+    "agent.py": "8ed6dab848af3edd6e1ac88efe68fe80befd6c76c47ce7c4d10af693819cf094",
+    "agent_loop.py": "d913f050313108a076b99e54be76c90a0af4684d9ab729b87211a215c489069e",
+    "arm_policy.json": "84066d70aa18f694100e6948039e35e577700890dec8f419984f9224d89c423c",
+    "common.py": "dd74d78f0e0f9aa3970a9365091ca28b66fe3b89ea7aadeb7bb8828fc27f988f",
+    "comparison.py": "3e5081a3ef3725c788706aab9bad6ee10174007ea6e0d67ff1cd4e82c94ee6cd",
+    "confirm_search.py": "6badf6e2f9b3339c58c465b6f085f70b4286b9174eb4d995626918113559476f",
+    "contrast.py": "2213c4d2627fe19b32b6c6da002860e868419dce3132acbc0d587ce98d1f07a6",
+    "crossval.py": "b8fc1db19de7edee96ad142926622f8381947308b6eca276848893b3589382c2",
+    "data_ingest.py": "f4067b4a8d43c765738c101c2597f2e4504a6d856876bddb8ed4819c10b51893",
+    "evaluation.py": "99ac62360abed57925808d0cc1968aaf760dfae10b778c8c2192502323e6058e",
+    "experiment_contract.py": "802dc3f68f78397b7a045f549a3697dba5890e4aadaeb3d235879c85787ebc94",
+    "feature_contract.py": "ac47aff6e4f39734182474fd7088196a4458d78664a9cbf8901180d4f1d2108c",
+    "feature_programs.py": "5d4e940a5ffeaab369115b593f3b724d7021ba4ecfd9c5f44bea519e05d3e483",
+    "feature_worker.py": "4e99a8e21dba40daec3541771e04306ca619515da0d942d3db2f2c5243d7ad1d",
+    "history_math.py": "757e4d6b8c855ee2f7a1245455f658f7c5d3b5af0a0ad6e52453c2754c9646ee",
+    "history_store.py": "3277e93848233816da46ac91d8336185b31b65ef6fe75cd1b2ae26aee3dd25d8",
+    "prediction.py": "b7a2de489b94568bbdb648a6091f48e97675f0614975041feffc9aef2df142a5",
+    "providers.py": "ea0fcb40466e237cc23bc2bc4b567a61367d781ac8c06f4b9615252a514f6117",
+    "raw_cache.py": "5c8ef1a8cf28198be732bc3ef080ba8e0e744c2c448fefd6a5756f5ff5f393d2",
+    "raw_events.py": "f21879b0c1a96a77c360f174469ccf95bf4df793be05330bb43d3bfe6c2c3dc0",
+    "README.md": "00176df2eb990ce068daf9a5e4dea0cfc0011c306b40f43e5bf01c7204f8af02",
+    "README_FIX4_中文.md": "418040de8cd71d040a90054885538c109f03d66576a1be73bbeec19d9c6a0366",
+    "README_V2_中文.md": "5e2eac157c41b1513fdd9b4fc228736e5c32dcbd63df8ba7aeef46d298ee114a",
+    "requirements.txt": "d43adb46f4f2c525d84ce84cd339d0f35d826aaad1494b8fd3c53e053acada8b",
+    "rerank.py": "6c8544915f29afda1b3c1bd6d86425a509f13d775ec0dbe5a87c47e7b2cc644f",
+    "resume_normalization.py": "6886e035ca4af57c46b80dc243bee754d9700ee77b854e010ce5a9e9d156461f",
+    "sample_builder.py": "1d9d9c04dc6db5e7ec1e853afbd52234d7490c3f4cd4d622addc72fc9e770a5d",
+    "scratch.py": "d03c69391325ea48bd8e7aac6d5dd050eed8249fd48c907c9cd5a5f8422ed72c",
+    "search_isolation.py": "90ce2b41365e4c43d61ee7adc32bc5ddb1a749a8056fb26d02c3e26abb0886f2",
+    "search_step.py": "258397e283ecc041cdf3022455d341c6cfb7fcfa9aa7a6f9f0585e8f89222ed0",
+    "SERVER_ACTIVATION.txt": "a5824db354cd7e0b9ff9af4ce1f21e3029b9fdb4229b0beada7019e0162998bf",
+    "settings.py": "a950a53464ff767b2e2c764a24c78fb5ad0b18713be9fa7ad681e88ed985f194",
+    "START_HERE_性能优化.txt": "1ee7b8470e595064467f335ecd742fabf6a6b854bc15f75b44a19794c566d273",
+    "TESTING.md": "4a82c837720bcea0d0f5b7e4c81751a50239b2b10ffe1ed24d9537004a93563f",
+    "training_selector.py": "4128e403f33356650ccc9e3252ce68892a88547964119346b606952b4b2d8c5a",
+    "upstream_release_manifest.json": "fdd8ac3348d7186a91935dc27128429659b3d8b9bd1c88dcfbe97675f15cf487",
+    "xgb_runner.py": "4cd3ff0fe0228bbbe25ac9548628958d8d5b768690b658b679a5c7f906ed3ed8",
+    "examples/mapping_example.json": "e37739303d65fd10b94e555303f13c07c37d0ba6f3fd34ccafbc8eab3ddaaf0f",
+    "examples/runtime.json": "1fca31cb396a164a59ced2dbf820869496a28b4009fceb1b58e534214625ef1c",
+    "prompts/analysis.txt": "e2e7606b4219defedb0ac0fe6ad104bebcb643bbcbd1e19923f5581a5c9837fc",
+    "prompts/code.txt": "49cc3ad27d5b344cd01a2528250df9c1fee1ef5e9fa9bf4c6c9225e7f970eae8",
+    "prompts/feature.txt": "5dfbd83e3e2ca046d5307c24b447828ca7d48728b57e769d131efc2c34bfffeb",
+    "tests/test_crossval.py": "cac562531616637898cf3f8b50a9f3f12981e33cb112c2f97dbd9128ad2d88a2",
+    "tests/test_feature_contract.py": "9565e9fd14da203504f90dc39c076033fa7cc047ae110c63e2267e214264b467",
+    "tests/test_parallel_predict.py": "f9ae244256c0407a29aac180bfec78ce593a0076ad06e5a409a45241b9dbdb24",
+    "tests/test_pool_scores.py": "ff25ab2806a2478208720ed56687654650845fc6b1e509a569304e4f4d1a0380",
+    "tests/test_preprocess_recovery.py": "ea1a04838d6bc448fb5318a10a3a6d3130c6b16a2b44a0f51d8ecfb5f7a41f3a",
+    "tests/test_provider.py": "8a1030cbe926300acf575737b3a7cd78327179258d1868c58ea2f8b28fbc4500",
+    "tests/test_raw_events.py": "5c831d50f26214379344835f8f5818e30d2fc611e61c52e7ce39597143d829e9",
+    "tests/test_rerank.py": "249ef99a49252de2678902d415d82523eeb7f2cec14e00fd94fdd87b0f9aa348",
+    "tests/test_truncation.py": "ef0cadcc9da9247c9786840cc764e899c3cd5db3edfb40ae661b2b486d7c79d5",
+    "tests/test_v2_loop.py": "f91e8e50f680678418522ba90e1f8bb352c9e1e1ec22a94f405b4f1595e44355",
+    "tests/test_workflow.py": "3c4d6bca13118a8c0c33c9abc47054e2214a3813702c1373977cc302281a84d5",
+    "skills/device-failure-experiment-loop/SKILL.md": "5dddb0348931369ac23332895f1b1f00324074b8f02b2e676f7fa471728b481e",
+    "skills/device-failure-experiment-loop/references/experiment-method.md": "3680886143ccb3650bc980af360061c276b69eeb9604a3f0a93c69d721cb34af"
+  },
+  "tests": 57
+}

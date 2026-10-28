@@ -1,0 +1,379 @@
+CV fold 1/3: training on 26 devices
+CV fold 1/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 2/3: training on 26 devices
+CV fold 2/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 3/3: training on 28 devices
+CV fold 3/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 1/3: training on 26 devices
+CV fold 1/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 2/3: training on 26 devices
+CV fold 2/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 3/3: training on 28 devices
+CV fold 3/3: scored 2 checkpoints x 5 periods (0s)
+test_end_to_end_oof_and_paired (test_crossval.CrossValidation.test_end_to_end_oof_and_paired) ... ok
+test_folds_disjoint_stratified_and_mask_training (test_crossval.CrossValidation.test_folds_disjoint_stratified_and_mask_training) ... ok
+test_scorer_matches_predict_for_every_aggregation (test_crossval.CrossValidation.test_scorer_matches_predict_for_every_aggregation) ... ok
+test_actionable_rejection (test_feature_contract.FeatureRegression.test_actionable_rejection) ... ok
+test_gap_helper_and_declared_examples (test_feature_contract.FeatureRegression.test_gap_helper_and_declared_examples) ... ok
+TRAIN_SAMPLE_VALIDATED devices=12 shards=4 labels_visible=False
+test_missing_first_six_and_late_training_data (test_feature_contract.FeatureRegression.test_missing_first_six_and_late_training_data) ... ok
+test_identical_tables_and_hashes (test_parallel_predict.ParallelPredict.test_identical_tables_and_hashes) ... ok
+test_equal_to_reference (test_pool_scores.Pool.test_equal_to_reference) ... ok
+Recovery metadata: 2/2 files
+Recovery: hashing immutable staging database
+RECOVERY_CHECKPOINT_READY: 12 devices; 854 observations
+Recovery: verifying staging database
+Recovery: keeping 1 completed shards; resume at device 2/12
+NORMALIZATION_RECOVERY_COMPLETE
+Recovery: verifying staging database
+test_resume_keeps_prefix_and_matches_fresh_normalization (test_preprocess_recovery.RecoveryTests.test_resume_keeps_prefix_and_matches_fresh_normalization) ... ok
+test_unsupported_mapping_fails_before_work (test_preprocess_recovery.RecoveryTests.test_unsupported_mapping_fails_before_work) ... ok
+test_memory_accounting_is_linear (test_preprocess_recovery.WriterTests.test_memory_accounting_is_linear) ... ok
+test_memory_flush_preserves_exact_parquet_bytes (test_preprocess_recovery.WriterTests.test_memory_flush_preserves_exact_parquet_bytes) ... ok
+test_row_flush_and_empty_frames (test_preprocess_recovery.WriterTests.test_row_flush_and_empty_frames) ... ok
+test_400_reason_is_saved_and_shown_without_credentials_or_retry (test_provider.ProviderRegressionTests.test_400_reason_is_saved_and_shown_without_credentials_or_retry) ... ok
+test_non_json_error_body_is_not_exposed (test_provider.ProviderRegressionTests.test_non_json_error_body_is_not_exposed) ... ok
+test_real_provider_messages_satisfy_json_contract_for_all_roles (test_provider.ProviderRegressionTests.test_real_provider_messages_satisfy_json_contract_for_all_roles) ... ok
+test_retryable_error_can_recover_and_usage_is_preserved (test_provider.ProviderRegressionTests.test_retryable_error_can_recover_and_usage_is_preserved) ... ok
+test_decode_and_pattern (test_raw_events.RawEvents.test_decode_and_pattern) ... ok
+test_empty_inputs_and_mapping (test_raw_events.RawEvents.test_empty_inputs_and_mapping) ... ok
+test_features_match_naive_and_are_causal (test_raw_events.RawEvents.test_features_match_naive_and_are_causal) ... ok
+test_range_and_distinct_primitives (test_raw_events.RawEvents.test_range_and_distinct_primitives) ... ok
+test_recipe_contract (test_rerank.Composition.test_recipe_contract) ... ok
+test_score_rule_ranking_and_roundtrip (test_rerank.Composition.test_score_rule_ranking_and_roundtrip) ... ok
+Step 1: validating 1h schedule...
+Step 1: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+Step 2: validating 1h schedule...
+Step 2: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+Step 4: validating 1h schedule...
+Step 4: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+CV fold 1/3: training on 59 devices
+CV fold 1/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 2/3: training on 60 devices
+CV fold 2/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 3/3: training on 61 devices
+CV fold 3/3: scored 2 checkpoints x 5 periods (0s)
+Step 1: validating reranked 1h schedule...
+Step 1: device F1=0.098361; TP=3 FP=54 FN=1; best=1
+Step 2: validating reranked 1h schedule...
+Step 2: device F1=0.750000; TP=3 FP=1 FN=1; best=2
+Step 4: validating reranked 1h schedule...
+Step 4: device F1=0.750000; TP=3 FP=1 FN=1; best=2
+Rerank CV fold 1/3: nested stage-1 gating and stage-2 fit
+Rerank CV fold 1/3: scored 2 checkpoints (0s)
+Rerank CV fold 2/3: nested stage-1 gating and stage-2 fit
+Rerank CV fold 2/3: scored 2 checkpoints (0s)
+Rerank CV fold 3/3: nested stage-1 gating and stage-2 fit
+Rerank CV fold 3/3: scored 2 checkpoints (0s)
+test_full_trial_and_nested_cv (test_rerank.EndToEnd.test_full_trial_and_nested_cv) ... ok
+2026-10-28T08:01:45Z agent_call {"role": "code", "number": 1}
+2026-10-28T08:01:45Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\rr_vv_p8sph\\session\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:01:48Z cross_validation_started {"trial": "trial_001", "folds": 3}
+2026-10-28T08:01:51Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "baseline", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.5495508313179016, "TP": 3, "FP": 0, "FN": 1, "precision": 1.0, "recall": 0.75, "f1": 0.8571428571428571, "eligible_devices": 70, "eligible_fault_devices": 4, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 1, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 20, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:01:51Z agent_call {"role": "feature", "number": 2}
+2026-10-28T08:01:51Z hypotheses_recorded {"count": 2}
+2026-10-28T08:01:51Z agent_call {"role": "analysis", "number": 3}
+2026-10-28T08:01:51Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "Separate TP from FP in the high-score region"}
+2026-10-28T08:01:51Z agent_call {"role": "code", "number": 4}
+2026-10-28T08:01:51Z training_started {"trial": "trial_002", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\rr_vv_p8sph\\session\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:01:54Z cross_validation_started {"trial": "trial_002", "folds": 3}
+2026-10-28T08:01:57Z experiment_complete {"trial": "trial_002", "accepted": true, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.7729743719100952, "TP": 3, "FP": 1, "FN": 1, "precision": 0.75, "recall": 0.75, "f1": 0.75, "eligible_devices": 70, "eligible_fault_devices": 4, "alarmed_devices": 4, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 1, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 20, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:01:57Z agent_call {"role": "analysis", "number": 5}
+2026-10-28T08:01:57Z response_repair {"role": "analysis", "attempt": 1, "error": "Complete a parameter and feature attempt before stopping; resource failures are reported separately"}
+2026-10-28T08:01:57Z agent_call {"role": "analysis", "number": 6}
+2026-10-28T08:01:57Z response_repair {"role": "analysis", "attempt": 2, "error": "Complete a parameter and feature attempt before stopping; resource failures are reported separately"}
+2026-10-28T08:01:57Z agent_call {"role": "analysis", "number": 7}
+2026-10-28T08:01:57Z response_repair {"role": "analysis", "attempt": 3, "error": "Complete a parameter and feature attempt before stopping; resource failures are reported separately"}
+2026-10-28T08:01:57Z decision_accepted {"action": "stop", "parent": null, "reason": "Analysis repair exhausted and no untried safe fallback remains: analysis response validation failed after bounded repair: Complete a parameter and feature attempt before stopping; resource failures are reported separately"}
+2026-10-28T08:01:57Z loop_complete {"status": "stopped", "best": "trial_002", "test_opened": false}
+test_agent_rerank_experiment (test_rerank.LoopIntegration.test_agent_rerank_experiment) ... ok
+2026-10-28T08:01:57Z agent_call {"role": "code", "number": 1}
+2026-10-28T08:01:57Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\rr_dahbu5i1\\session\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:02:00Z cross_validation_started {"trial": "trial_001", "folds": 3}
+2026-10-28T08:02:03Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "baseline", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.5495508313179016, "TP": 3, "FP": 0, "FN": 1, "precision": 1.0, "recall": 0.75, "f1": 0.8571428571428571, "eligible_devices": 70, "eligible_fault_devices": 4, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 1, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 20, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:02:03Z agent_call {"role": "feature", "number": 2}
+2026-10-28T08:02:03Z hypotheses_recorded {"count": 2}
+2026-10-28T08:02:03Z agent_call {"role": "analysis", "number": 3}
+2026-10-28T08:02:03Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "Separate TP from FP in the high-score region"}
+2026-10-28T08:02:03Z agent_call {"role": "code", "number": 4}
+2026-10-28T08:02:03Z training_started {"trial": "trial_002", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\rr_dahbu5i1\\session\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:02:05Z training_failed {"trial": "trial_002", "infrastructure": false, "error": "Worker exit=1. See C:\\Users\\38104\\AppData\\Local\\Temp\\rr_dahbu5i1\\session\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:02:05Z agent_call {"role": "analysis", "number": 5}
+2026-10-28T08:02:05Z response_repair {"role": "analysis", "attempt": 1, "error": "Recipe already attempted; inspect history"}
+2026-10-28T08:02:05Z agent_call {"role": "analysis", "number": 6}
+2026-10-28T08:02:05Z response_repair {"role": "analysis", "attempt": 2, "error": "Recipe already attempted; inspect history"}
+2026-10-28T08:02:05Z agent_call {"role": "analysis", "number": 7}
+2026-10-28T08:02:05Z response_repair {"role": "analysis", "attempt": 3, "error": "Recipe already attempted; inspect history"}
+2026-10-28T08:02:05Z controller_fallback {"error": "analysis response validation failed after bounded repair: Recipe already attempted; inspect history", "changes": {"params.learning_rate": 0.05}}
+2026-10-28T08:02:05Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "Controller fallback after invalid analysis response"}
+2026-10-28T08:02:05Z agent_call {"role": "code", "number": 8}
+2026-10-28T08:02:05Z training_started {"trial": "trial_003", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\rr_dahbu5i1\\session\\trials\\trial_003\\attempt_01\\execution.log"}
+2026-10-28T08:02:08Z cross_validation_started {"trial": "trial_003", "folds": 3}
+2026-10-28T08:02:11Z experiment_complete {"trial": "trial_003", "accepted": true, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.524836540222168, "TP": 3, "FP": 0, "FN": 1, "precision": 1.0, "recall": 0.75, "f1": 0.8571428571428571, "eligible_devices": 70, "eligible_fault_devices": 4, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 1, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 20, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:02:11Z agent_call {"role": "analysis", "number": 9}
+2026-10-28T08:02:11Z response_repair {"role": "analysis", "attempt": 1, "error": "Complete a parameter and feature attempt before stopping; resource failures are reported separately"}
+2026-10-28T08:02:11Z agent_call {"role": "analysis", "number": 10}
+2026-10-28T08:02:11Z response_repair {"role": "analysis", "attempt": 2, "error": "Complete a parameter and feature attempt before stopping; resource failures are reported separately"}
+2026-10-28T08:02:11Z agent_call {"role": "analysis", "number": 11}
+2026-10-28T08:02:11Z response_repair {"role": "analysis", "attempt": 3, "error": "Complete a parameter and feature attempt before stopping; resource failures are reported separately"}
+2026-10-28T08:02:11Z decision_accepted {"action": "stop", "parent": null, "reason": "Analysis repair exhausted and no untried safe fallback remains: analysis response validation failed after bounded repair: Complete a parameter and feature attempt before stopping; resource failures are reported separately"}
+2026-10-28T08:02:11Z loop_complete {"status": "stopped", "best": "trial_003", "test_opened": false}
+test_agent_rerank_infeasible_gate_is_recorded (test_rerank.LoopIntegration.test_agent_rerank_infeasible_gate_is_recorded) ... ok
+test_fold_stage2_never_sees_its_fold (test_rerank.NestedCV.test_fold_stage2_never_sees_its_fold) ... ok
+test_gate_with_too_few_rows_is_refused (test_rerank.NestedCV.test_gate_with_too_few_rows_is_refused) ... ok
+2026-10-28T08:02:12Z agent_call {"role": "feature", "number": 5}
+2026-10-28T08:02:12Z agent_call {"role": "feature", "number": 6}
+2026-10-28T08:02:12Z agent_call {"role": "analysis", "number": 7}
+test_adaptation_effort_is_explicit_but_other_roles_keep_their_default (test_truncation.TruncationRecoveryTests.test_adaptation_effort_is_explicit_but_other_roles_keep_their_default) ... ok
+2026-10-28T08:02:12Z agent_call {"role": "feature", "number": 5}
+test_budget_cap_stops_without_repeating_identical_request (test_truncation.TruncationRecoveryTests.test_budget_cap_stops_without_repeating_identical_request) ... ok
+2026-10-28T08:02:12Z agent_call {"role": "feature", "number": 5}
+2026-10-28T08:02:12Z reply_budget_increased {"role": "feature", "attempt": 1, "old_max_tokens": 12000, "new_max_tokens": 24000}
+2026-10-28T08:02:12Z agent_call {"role": "feature", "number": 6}
+test_length_changes_budget_and_preserves_every_call_and_token (test_truncation.TruncationRecoveryTests.test_length_changes_budget_and_preserves_every_call_and_token) ... ok
+2026-10-28T08:02:12Z agent_call {"role": "feature", "number": 5}
+2026-10-28T08:02:12Z reply_budget_increased {"role": "feature", "attempt": 1, "old_max_tokens": 12000, "new_max_tokens": 24000}
+2026-10-28T08:02:12Z agent_call {"role": "feature", "number": 5}
+2026-10-28T08:02:12Z reply_budget_increased {"role": "feature", "attempt": 1, "old_max_tokens": 12000, "new_max_tokens": 24000}
+test_length_retry_respects_global_call_and_token_limits (test_truncation.TruncationRecoveryTests.test_length_retry_respects_global_call_and_token_limits) ... ok
+2026-10-28T08:02:12Z agent_call {"role": "feature", "number": 5}
+test_non_length_stop_is_not_mislabeled_or_repaired (test_truncation.TruncationRecoveryTests.test_non_length_stop_is_not_mislabeled_or_repaired) ... ok
+2026-10-28T08:02:12Z agent_call {"role": "code", "number": 1}
+2026-10-28T08:02:12Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\v2_v06d8neu\\session\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:02:15Z cross_validation_started {"trial": "trial_001", "folds": 3}
+2026-10-28T08:02:18Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "baseline", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.549618124961853, "TP": 1, "FP": 2, "FN": 1, "precision": 0.3333333333333333, "recall": 0.5, "f1": 0.4, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:02:18Z agent_call {"role": "feature", "number": 2}
+2026-10-28T08:02:18Z hypotheses_recorded {"count": 3}
+2026-10-28T08:02:18Z agent_call {"role": "analysis", "number": 3}
+2026-10-28T08:02:18Z decision_accepted {"action": "diagnose", "parent": "trial_001", "reason": "evidence"}
+2026-10-28T08:02:19Z diagnostic_complete {"trial": "trial_001", "kind": "high_score_contrast", "path": "C:\\Users\\38104\\AppData\\Local\\Temp\\v2_v06d8neu\\session\\diagnostics\\trial_001\\high_score_contrast\\evidence.json"}
+2026-10-28T08:02:19Z agent_call {"role": "analysis", "number": 4}
+2026-10-28T08:02:19Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "control"}
+2026-10-28T08:02:19Z agent_call {"role": "code", "number": 5}
+2026-10-28T08:02:19Z training_started {"trial": "trial_002", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\v2_v06d8neu\\session\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:02:22Z cross_validation_started {"trial": "trial_002", "folds": 3}
+2026-10-28T08:02:25Z experiment_complete {"trial": "trial_002", "accepted": true, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.549618124961853, "TP": 1, "FP": 2, "FN": 1, "precision": 0.3333333333333333, "recall": 0.5, "f1": 0.4, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:02:25Z agent_call {"role": "analysis", "number": 6}
+2026-10-28T08:02:25Z decision_accepted {"action": "features", "parent": "trial_002", "reason": "r"}
+2026-10-28T08:02:26Z agent_call {"role": "feature", "number": 7}
+2026-10-28T08:02:28Z feature_prescreen {"job": "job_001", "passed": false, "features": []}
+2026-10-28T08:02:28Z agent_call {"role": "analysis", "number": 8}
+2026-10-28T08:02:28Z decision_accepted {"action": "features", "parent": "trial_002", "reason": "r"}
+2026-10-28T08:02:29Z agent_call {"role": "feature", "number": 9}
+2026-10-28T08:02:31Z feature_prescreen {"job": "job_002", "passed": true, "features": ["fe_xmax3d"]}
+2026-10-28T08:02:31Z agent_call {"role": "code", "number": 10}
+2026-10-28T08:02:31Z training_started {"trial": "trial_003", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\v2_v06d8neu\\session\\trials\\trial_003\\attempt_01\\execution.log"}
+2026-10-28T08:02:34Z cross_validation_started {"trial": "trial_003", "folds": 3}
+2026-10-28T08:02:37Z experiment_complete {"trial": "trial_003", "accepted": true, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.549618124961853, "TP": 1, "FP": 2, "FN": 1, "precision": 0.3333333333333333, "recall": 0.5, "f1": 0.4, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:02:37Z agent_call {"role": "analysis", "number": 11}
+2026-10-28T08:02:37Z decision_accepted {"action": "stop", "parent": null, "reason": "done"}
+2026-10-28T08:02:37Z loop_complete {"status": "stopped", "best": "trial_003", "test_opened": false}
+test_full_loop (test_v2_loop.V2Loop.test_full_loop) ... ok
+2026-10-28T08:02:37Z agent_call {"role": "code", "number": 1}
+2026-10-28T08:02:37Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\v2b_6xk3qeoy\\session\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:02:41Z cross_validation_started {"trial": "trial_001", "folds": 3}
+2026-10-28T08:02:44Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "baseline", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.549618124961853, "TP": 1, "FP": 2, "FN": 1, "precision": 0.3333333333333333, "recall": 0.5, "f1": 0.4, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:02:44Z agent_call {"role": "feature", "number": 2}
+2026-10-28T08:02:44Z hypotheses_recorded {"count": 3}
+2026-10-28T08:02:44Z agent_call {"role": "analysis", "number": 3}
+2026-10-28T08:02:44Z decision_accepted {"action": "diagnose", "parent": "trial_001", "reason": "evidence"}
+2026-10-28T08:02:45Z diagnostic_complete {"trial": "trial_001", "kind": "high_score_contrast", "path": "C:\\Users\\38104\\AppData\\Local\\Temp\\v2b_6xk3qeoy\\session\\diagnostics\\trial_001\\high_score_contrast\\evidence.json"}
+2026-10-28T08:02:45Z agent_call {"role": "analysis", "number": 4}
+2026-10-28T08:02:45Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "control"}
+2026-10-28T08:02:45Z agent_call {"role": "code", "number": 5}
+2026-10-28T08:02:45Z training_started {"trial": "trial_002", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\v2b_6xk3qeoy\\session\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:02:48Z cross_validation_started {"trial": "trial_002", "folds": 3}
+2026-10-28T08:02:51Z experiment_complete {"trial": "trial_002", "accepted": false, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.549618124961853, "TP": 1, "FP": 2, "FN": 1, "precision": 0.3333333333333333, "recall": 0.5, "f1": 0.4, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:02:51Z agent_call {"role": "analysis", "number": 6}
+2026-10-28T08:02:51Z decision_accepted {"action": "features", "parent": "trial_001", "reason": "r"}
+2026-10-28T08:02:52Z agent_call {"role": "feature", "number": 7}
+2026-10-28T08:02:54Z feature_prescreen {"job": "job_001", "passed": false, "features": []}
+2026-10-28T08:02:54Z agent_call {"role": "analysis", "number": 8}
+2026-10-28T08:02:54Z decision_accepted {"action": "features", "parent": "trial_001", "reason": "r"}
+2026-10-28T08:02:55Z agent_call {"role": "feature", "number": 9}
+2026-10-28T08:02:57Z feature_prescreen {"job": "job_002", "passed": true, "features": ["fe_xmax3d"]}
+2026-10-28T08:02:57Z agent_call {"role": "code", "number": 10}
+2026-10-28T08:02:57Z training_started {"trial": "trial_003", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\v2b_6xk3qeoy\\session\\trials\\trial_003\\attempt_01\\execution.log"}
+2026-10-28T08:03:00Z cross_validation_started {"trial": "trial_003", "folds": 3}
+2026-10-28T08:03:03Z experiment_complete {"trial": "trial_003", "accepted": false, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.549618124961853, "TP": 1, "FP": 2, "FN": 1, "precision": 0.3333333333333333, "recall": 0.5, "f1": 0.4, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:03Z agent_call {"role": "analysis", "number": 11}
+2026-10-28T08:03:03Z decision_accepted {"action": "stop", "parent": null, "reason": "done"}
+2026-10-28T08:03:03Z loop_complete {"status": "stopped", "best": "trial_001", "test_opened": false}
+test_strict_bound_rejects_ties (test_v2_loop.V2Loop.test_strict_bound_rejects_ties) ... ok
+test_initialize_reuses_active_cache_without_touching_old_session (test_v3.Controller.test_initialize_reuses_active_cache_without_touching_old_session) ... ok
+2026-10-28T08:03:03Z agent_call {"role": "code", "number": 1}
+2026-10-28T08:03:03Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\tmp6yihg9n8\\session\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:03:06Z cross_validation_started {"trial": "trial_001", "folds": 3}
+2026-10-28T08:03:09Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "baseline", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.549618124961853, "TP": 1, "FP": 2, "FN": 1, "precision": 0.3333333333333333, "recall": 0.5, "f1": 0.4, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:09Z agent_call {"role": "feature", "number": 2}
+2026-10-28T08:03:09Z hypotheses_recorded {"count": 3}
+2026-10-28T08:03:09Z agent_call {"role": "analysis", "number": 3}
+2026-10-28T08:03:09Z decision_accepted {"action": "diagnose", "parent": "trial_001", "reason": "Compare mechanisms"}
+2026-10-28T08:03:10Z diagnostic_complete {"trial": "trial_001", "kind": "error_atlas", "path": "C:\\Users\\38104\\AppData\\Local\\Temp\\tmp6yihg9n8\\session\\diagnostics\\trial_001\\error_atlas\\evidence.json"}
+2026-10-28T08:03:10Z agent_call {"role": "analysis", "number": 4}
+2026-10-28T08:03:10Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "Device dominance"}
+2026-10-28T08:03:10Z agent_call {"role": "code", "number": 5}
+2026-10-28T08:03:10Z training_started {"trial": "trial_002", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\tmp6yihg9n8\\session\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:03:13Z cross_validation_started {"trial": "trial_002", "folds": 3}
+2026-10-28T08:03:16Z experiment_complete {"trial": "trial_002", "accepted": true, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.5, "TP": 1, "FP": 45, "FN": 1, "precision": 0.021739130434782608, "recall": 0.5, "f1": 0.041666666666666664, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 46, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:16Z agent_call {"role": "analysis", "number": 6}
+2026-10-28T08:03:16Z decision_accepted {"action": "features", "parent": "trial_001", "reason": "Interaction control"}
+2026-10-28T08:03:17Z agent_call {"role": "feature", "number": 7}
+2026-10-28T08:03:19Z feature_prescreen {"job": "job_001", "passed": false, "features": []}
+2026-10-28T08:03:19Z agent_call {"role": "code", "number": 8}
+2026-10-28T08:03:19Z training_started {"trial": "trial_003", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\tmp6yihg9n8\\session\\trials\\trial_003\\attempt_01\\execution.log"}
+2026-10-28T08:03:22Z cross_validation_started {"trial": "trial_003", "folds": 3}
+2026-10-28T08:03:25Z experiment_complete {"trial": "trial_003", "accepted": true, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.6339314579963684, "TP": 1, "FP": 0, "FN": 1, "precision": 1.0, "recall": 0.5, "f1": 0.6666666666666666, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 1, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:25Z agent_call {"role": "analysis", "number": 9}
+2026-10-28T08:03:25Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "Complement misses"}
+2026-10-28T08:03:25Z agent_call {"role": "code", "number": 10}
+2026-10-28T08:03:25Z training_started {"trial": "trial_004", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\tmp6yihg9n8\\session\\trials\\trial_004\\attempt_01\\execution.log"}
+2026-10-28T08:03:28Z cross_validation_started {"trial": "trial_004", "folds": 3}
+2026-10-28T08:03:31Z experiment_complete {"trial": "trial_004", "accepted": false, "rule": "cv_paired", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.549618124961853, "TP": 1, "FP": 2, "FN": 1, "precision": 0.3333333333333333, "recall": 0.5, "f1": 0.4, "eligible_devices": 47, "eligible_fault_devices": 2, "alarmed_devices": 3, "no_history_devices": 1, "no_history_fault_devices": 1, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 1, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 13, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:31Z loop_complete {"status": "trial_budget_complete", "best": "trial_003", "test_opened": false}
+test_real_loop_diagnostics_exploration_and_parallel (test_v3.Controller.test_real_loop_diagnostics_exploration_and_parallel) ... ok
+test_empty_groups_are_evidence_not_an_exception (test_v3.Evidence.test_empty_groups_are_evidence_not_an_exception) ... ok
+test_exploration_requires_reason_is_bounded_and_resume_idempotent (test_v3.Evidence.test_exploration_requires_reason_is_bounded_and_resume_idempotent) ... ok
+test_fn_causes_and_late_alarm_overlap (test_v3.Evidence.test_fn_causes_and_late_alarm_overlap) ... ok
+test_recall_only_feature_is_not_rejected (test_v3.Evidence.test_recall_only_feature_is_not_rejected) ... ok
+test_held_out_poison_does_not_change_auxiliary (test_v3.Independent.test_held_out_poison_does_not_change_auxiliary) ... ok
+test_no_gate_and_serialization (test_v3.Independent.test_no_gate_and_serialization) ... ok
+Step 1: validating 1h schedule...
+Step 1: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+Step 2: validating 1h schedule...
+Step 2: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+Step 4: validating 1h schedule...
+Step 4: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+CV fold 1/3: training on 59 devices
+CV fold 1/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 2/3: training on 60 devices
+CV fold 2/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 3/3: training on 61 devices
+CV fold 3/3: scored 2 checkpoints x 5 periods (0s)
+Parallel step 1: F1=0.857143 TP=3 FP=0 FN=1
+Parallel step 2: F1=0.857143 TP=3 FP=0 FN=1
+Parallel step 4: F1=0.857143 TP=3 FP=0 FN=1
+Step 1: validating 1h schedule...
+Step 1: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+Step 2: validating 1h schedule...
+Step 2: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+Step 4: validating 1h schedule...
+Step 4: device F1=0.857143; TP=3 FP=0 FN=1; best=1
+CV fold 1/3: training on 59 devices
+CV fold 1/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 2/3: training on 60 devices
+CV fold 2/3: scored 2 checkpoints x 5 periods (0s)
+CV fold 3/3: training on 61 devices
+CV fold 3/3: scored 2 checkpoints x 5 periods (0s)
+Parallel step 1: F1=0.857143 TP=3 FP=0 FN=1
+Parallel step 2: F1=0.857143 TP=3 FP=0 FN=1
+Parallel step 4: F1=0.857143 TP=3 FP=0 FN=1
+test_parallel_real_fit_cv_reload_memory_and_hdd (test_v3.Independent.test_parallel_real_fit_cv_reload_memory_and_hdd) ... ok
+RAW_CACHE_PROGRESS shards=1/1 devices=6 with_raw=1 seconds=0
+RAW_CACHE_READY <LOCAL_HOME>\AppData\Local\Temp\tmp3gs77yuw\new_cache {"devices": 6, "with_raw": 1, "raw_events": 1, "raw_events_after_cutoff": 0}
+RAW_CACHE_REUSED <LOCAL_HOME>\AppData\Local\Temp\tmp3gs77yuw\new_cache
+test_cache_representation_roundtrip_and_refuses_wrong_reuse (test_v3.Spatial.test_cache_representation_roundtrip_and_refuses_wrong_reuse) ... ok
+test_chip_identity_short_windows_and_future_prefix (test_v3.Spatial.test_chip_identity_short_windows_and_future_prefix) ... ok
+test_shape_difference_and_missing (test_v3.Spatial.test_shape_difference_and_missing) ... ok
+test_feature_causality_and_rejection (test_workflow.Contracts.test_feature_causality_and_rejection) ... ok
+test_formats_and_ids (test_workflow.Contracts.test_formats_and_ids) ... ok
+test_lead_bounds_and_no_prediction (test_workflow.Contracts.test_lead_bounds_and_no_prediction) ... ok
+test_model_identity (test_workflow.Contracts.test_model_identity) ... ok
+test_terminal_positive_and_censoring (test_workflow.Contracts.test_terminal_positive_and_censoring) ... ok
+SESSION: <LOCAL_HOME>\AppData\Local\Temp\dfa_history_g3vopw69\work\sessions\20261028_160340_hdd_26c23234
+2026-10-28T08:03:40Z agent_call {"role": "feature", "number": 1}
+2026-10-28T08:03:40Z agent_call {"role": "code", "number": 2}
+2026-10-28T08:03:40Z response_repair {"role": "code", "attempt": 1, "error": "Use ctx.run(literal_plan)"}
+2026-10-28T08:03:40Z agent_call {"role": "code", "number": 3}
+2026-10-28T08:03:40Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_history_g3vopw69\\work\\sessions\\20261028_160340_hdd_26c23234\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:03:43Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "selection_f1", "protocol": "period_device_f1_v2", "threshold": 0.5, "TP": 2, "FP": 8, "FN": 0, "precision": 0.2, "recall": 1.0, "f1": 0.3333333333333333, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 10, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:43Z agent_call {"role": "code", "number": 4}
+2026-10-28T08:03:43Z training_started {"trial": "trial_002", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_history_g3vopw69\\work\\sessions\\20261028_160340_hdd_26c23234\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:03:46Z experiment_complete {"trial": "trial_002", "accepted": false, "rule": "selection_f1", "protocol": "period_device_f1_v2", "threshold": 0.47399500012397766, "TP": 2, "FP": 8, "FN": 0, "precision": 0.2, "recall": 1.0, "f1": 0.3333333333333333, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 10, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:46Z diagnostic_complete {"trial": "trial_001", "kind": "score_distribution", "path": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_history_g3vopw69\\work\\sessions\\20261028_160340_hdd_26c23234\\diagnostics\\trial_001\\score_distribution\\evidence.json"}
+test_daily_history_and_weighted_training (test_workflow.Integration.test_daily_history_and_weighted_training) ... ok
+SESSION: <LOCAL_HOME>\AppData\Local\Temp\dfa_contract_93r1ryx2\work\sessions\20261028_160346_hdd_bf4bdc26
+2026-10-28T08:03:46Z agent_call {"role": "feature", "number": 1}
+2026-10-28T08:03:46Z controller_fallback {"error": "bad JSON", "changes": {"params.learning_rate": 0.05}}
+2026-10-28T08:03:46Z limits_changed {"before": {"max_agent_calls": 160, "trial_timeout_seconds": 7200}, "after": {"max_agent_calls": 200, "trial_timeout_seconds": 14400}}
+test_handoff_fallback_scope_and_resource_limits (test_workflow.Integration.test_handoff_fallback_scope_and_resource_limits) ... ok
+SESSION: <LOCAL_HOME>\AppData\Local\Temp\dfa_skjp2q9h\work\sessions\20261028_160346_hdd_68b43918
+2026-10-28T08:03:47Z agent_call {"role": "feature", "number": 1}
+2026-10-28T08:03:47Z agent_call {"role": "code", "number": 2}
+2026-10-28T08:03:47Z response_repair {"role": "code", "attempt": 1, "error": "Use ctx.run(literal_plan)"}
+2026-10-28T08:03:47Z agent_call {"role": "code", "number": 3}
+2026-10-28T08:03:47Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_skjp2q9h\\work\\sessions\\20261028_160346_hdd_68b43918\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:03:50Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "selection_f1", "protocol": "period_device_f1_v2", "threshold": 0.5494954586029053, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:50Z agent_call {"role": "analysis", "number": 4}
+2026-10-28T08:03:50Z agent_call {"role": "analysis", "number": 5}
+2026-10-28T08:03:50Z decision_accepted {"action": "diagnose", "parent": "trial_001", "reason": "Offline test control"}
+2026-10-28T08:03:50Z diagnostic_complete {"trial": "trial_001", "kind": "coverage", "path": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_skjp2q9h\\work\\sessions\\20261028_160346_hdd_68b43918\\diagnostics\\trial_001\\coverage\\evidence.json"}
+2026-10-28T08:03:50Z agent_call {"role": "analysis", "number": 6}
+2026-10-28T08:03:50Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "Offline test control"}
+2026-10-28T08:03:50Z agent_call {"role": "code", "number": 7}
+2026-10-28T08:03:50Z training_started {"trial": "trial_002", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_skjp2q9h\\work\\sessions\\20261028_160346_hdd_68b43918\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:03:53Z experiment_complete {"trial": "trial_002", "accepted": false, "rule": "selection_f1", "protocol": "period_device_f1_v2", "threshold": 0.5248087048530579, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:53Z agent_call {"role": "analysis", "number": 8}
+2026-10-28T08:03:53Z decision_accepted {"action": "features", "parent": "trial_002", "reason": "Offline test control"}
+2026-10-28T08:03:54Z agent_call {"role": "feature", "number": 9}
+2026-10-28T08:03:55Z feature_repair {"job": "job_001", "attempt": 1, "error": "Worker exit=1. See C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_skjp2q9h\\work\\sessions\\20261028_160346_hdd_68b43918\\feature_jobs\\job_001\\execution.log"}
+2026-10-28T08:03:55Z agent_call {"role": "feature", "number": 10}
+2026-10-28T08:03:56Z agent_call {"role": "code", "number": 11}
+2026-10-28T08:03:56Z training_started {"trial": "trial_003", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_skjp2q9h\\work\\sessions\\20261028_160346_hdd_68b43918\\trials\\trial_003\\attempt_01\\execution.log"}
+2026-10-28T08:03:59Z experiment_complete {"trial": "trial_003", "accepted": false, "rule": "selection_f1", "protocol": "period_device_f1_v2", "threshold": 0.5248087048530579, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:03:59Z loop_complete {"status": "trial_budget_complete", "best": "trial_001", "test_opened": false}
+2026-10-28T08:03:59Z loop_complete {"status": "trial_budget_complete", "best": "trial_001", "test_opened": false}
+2026-10-28T08:03:59Z agent_call {"role": "code", "number": 12}
+2026-10-28T08:03:59Z training_started {"trial": "trial_004", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_skjp2q9h\\work\\sessions\\20261028_160346_hdd_68b43918\\trials\\trial_004\\attempt_01\\execution.log"}
+2026-10-28T08:04:01Z experiment_complete {"trial": "trial_004", "accepted": false, "rule": "selection_f1", "protocol": "period_device_f1_v2", "threshold": 0.5248087048530579, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+SESSION: <LOCAL_HOME>\AppData\Local\Temp\dfa_skjp2q9h\work\sessions\20261028_160401_hdd_d7ec1c26
+2026-10-28T08:04:01Z agent_call {"role": "feature", "number": 1}
+2026-10-28T08:04:01Z agent_call {"role": "code", "number": 2}
+2026-10-28T08:04:01Z response_repair {"role": "code", "attempt": 1, "error": "Use ctx.run(literal_plan)"}
+2026-10-28T08:04:01Z agent_call {"role": "code", "number": 3}
+2026-10-28T08:04:01Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_skjp2q9h\\work\\sessions\\20261028_160401_hdd_d7ec1c26\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:04:04Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "selection_f1", "protocol": "period_device_f1_v2", "threshold": 0.5494954586029053, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+test_hdd_mixed_schemas_end_to_end (test_workflow.Integration.test_hdd_mixed_schemas_end_to_end) ... ok
+SESSION: <LOCAL_HOME>\AppData\Local\Temp\dfa_lkhfuoo_\work\sessions\20261028_160404_memory_78b84afe
+2026-10-28T08:04:04Z agent_call {"role": "feature", "number": 1}
+2026-10-28T08:04:05Z agent_call {"role": "code", "number": 2}
+2026-10-28T08:04:05Z response_repair {"role": "code", "attempt": 1, "error": "Use ctx.run(literal_plan)"}
+2026-10-28T08:04:05Z agent_call {"role": "code", "number": 3}
+2026-10-28T08:04:05Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_lkhfuoo_\\work\\sessions\\20261028_160404_memory_78b84afe\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:04:08Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "selection_f1", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.5494954586029053, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:04:08Z agent_call {"role": "analysis", "number": 4}
+2026-10-28T08:04:08Z agent_call {"role": "analysis", "number": 5}
+2026-10-28T08:04:08Z decision_accepted {"action": "diagnose", "parent": "trial_001", "reason": "Offline test control"}
+2026-10-28T08:04:08Z diagnostic_complete {"trial": "trial_001", "kind": "coverage", "path": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_lkhfuoo_\\work\\sessions\\20261028_160404_memory_78b84afe\\diagnostics\\trial_001\\coverage\\evidence.json"}
+2026-10-28T08:04:08Z agent_call {"role": "analysis", "number": 6}
+2026-10-28T08:04:08Z decision_accepted {"action": "experiment", "parent": "trial_001", "reason": "Offline test control"}
+2026-10-28T08:04:08Z agent_call {"role": "code", "number": 7}
+2026-10-28T08:04:08Z training_started {"trial": "trial_002", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_lkhfuoo_\\work\\sessions\\20261028_160404_memory_78b84afe\\trials\\trial_002\\attempt_01\\execution.log"}
+2026-10-28T08:04:11Z experiment_complete {"trial": "trial_002", "accepted": false, "rule": "selection_f1", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.5248087048530579, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:04:11Z agent_call {"role": "analysis", "number": 8}
+2026-10-28T08:04:11Z decision_accepted {"action": "features", "parent": "trial_002", "reason": "Offline test control"}
+2026-10-28T08:04:12Z agent_call {"role": "feature", "number": 9}
+2026-10-28T08:04:13Z feature_repair {"job": "job_001", "attempt": 1, "error": "Worker exit=1. See C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_lkhfuoo_\\work\\sessions\\20261028_160404_memory_78b84afe\\feature_jobs\\job_001\\execution.log"}
+2026-10-28T08:04:13Z agent_call {"role": "feature", "number": 10}
+2026-10-28T08:04:14Z agent_call {"role": "code", "number": 11}
+2026-10-28T08:04:14Z training_started {"trial": "trial_003", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_lkhfuoo_\\work\\sessions\\20261028_160404_memory_78b84afe\\trials\\trial_003\\attempt_01\\execution.log"}
+2026-10-28T08:04:17Z experiment_complete {"trial": "trial_003", "accepted": false, "rule": "selection_f1", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.5248087048530579, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+2026-10-28T08:04:17Z loop_complete {"status": "trial_budget_complete", "best": "trial_001", "test_opened": false}
+2026-10-28T08:04:17Z loop_complete {"status": "trial_budget_complete", "best": "trial_001", "test_opened": false}
+2026-10-28T08:04:17Z agent_call {"role": "code", "number": 12}
+2026-10-28T08:04:17Z training_started {"trial": "trial_004", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_lkhfuoo_\\work\\sessions\\20261028_160404_memory_78b84afe\\trials\\trial_004\\attempt_01\\execution.log"}
+2026-10-28T08:04:19Z experiment_complete {"trial": "trial_004", "accepted": false, "rule": "selection_f1", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.5248087048530579, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+SESSION: <LOCAL_HOME>\AppData\Local\Temp\dfa_lkhfuoo_\work\sessions\20261028_160419_memory_c6ca80e0
+2026-10-28T08:04:19Z agent_call {"role": "feature", "number": 1}
+2026-10-28T08:04:19Z agent_call {"role": "code", "number": 2}
+2026-10-28T08:04:19Z response_repair {"role": "code", "attempt": 1, "error": "Use ctx.run(literal_plan)"}
+2026-10-28T08:04:19Z agent_call {"role": "code", "number": 3}
+2026-10-28T08:04:19Z training_started {"trial": "trial_001", "log": "C:\\Users\\38104\\AppData\\Local\\Temp\\dfa_lkhfuoo_\\work\\sessions\\20261028_160419_memory_c6ca80e0\\trials\\trial_001\\attempt_01\\execution.log"}
+2026-10-28T08:04:22Z experiment_complete {"trial": "trial_001", "accepted": true, "rule": "selection_f1", "protocol": "memory_15m_7d_device_f1_v2", "threshold": 0.5494954586029053, "TP": 2, "FP": 0, "FN": 0, "precision": 1.0, "recall": 1.0, "f1": 1.0, "eligible_devices": 10, "eligible_fault_devices": 2, "alarmed_devices": 2, "no_history_devices": 0, "no_history_fault_devices": 0, "fault_without_timely_scheduled_opportunity": 0, "positive_without_scored_positive_day": 0, "unknown_devices": 0, "unknown_alarm_devices": 0, "excluded_late_entry_devices": 0, "excluded_preexisting_fault_devices": 2, "metric_scope": "Local device F1 with frozen task lead interval. Alarmed fault with no in-window hit counts FP and FN. Unknown follow-up excluded and reported separately."}
+test_memory_b_end_to_end (test_workflow.Integration.test_memory_b_end_to_end) ... ok
+test_reply_format_guard (test_workflow.Integration.test_reply_format_guard) ... ok
+
+----------------------------------------------------------------------
+Ran 57 tests in 198.528s
+
+OK

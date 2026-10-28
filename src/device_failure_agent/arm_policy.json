@@ -1,0 +1,5 @@
+{
+  "name": "v3_error_guided",
+  "description": "Domain-adapted evidence loop: separate false alarms, missed faults and coverage; allow bounded interaction/recall feature exploration, single-factor device weights and optional independent parallel branch. Reuse the source sampling policy and fixed evaluation. New source/representation requires a new cache/session. TEST stays outside search.",
+  "config": {"prescreen_mode":"balanced", "feature_exploration_budget":2, "parallel_allowed":true, "device_weight_allowed":true}
+}

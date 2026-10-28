@@ -1,0 +1,26 @@
+预处理性能优化版 api_fix3
+
+修复原因：每加入一台设备，旧 Writer.add 会重新扫描整批已缓存设备的内存大小，形成批内二次方开销。
+新实现只累计新加入数据的内存，保持 200000 行 / 128 MiB 的原刷新阈值和原数据内容。
+
+服务器上的现有实验保持同一会话：
+/root/autodl-tmp/device_failure_workspace/sessions/20261023_225319_hdd_67ff480f
+
+新程序目录：
+/root/autodl-tmp/device_failure_agent_20261023_api_fix3
+
+已经运行的任务不要重复启动。查看最新日志：
+tail -n 50 -f "$(cat /root/autodl-tmp/device_failure_workspace/sessions/20261023_225319_hdd_67ff480f/current_console_path.txt)"
+
+当前会话完成预处理后自动进入训练。保留原有 API 调用/token 计数、模型参数、数据、标签、时间切分、评分规则与测试集关闭状态。
+
+续跑恢复点：会话目录下 upgrade_backups/api_fix3。
+该目录包含原程序校验信息、原会话状态、SQLite 硬链接快照、已完成 Parquet 的硬链接备份、prepared.json 和升级回执。
+SQLite 备份与原文件共享磁盘块，不复制额外 65 GiB 数据。请保留该目录供恢复使用。
+
+本包内 server_upgrade 脚本仅适用于上面这一个已经核验的 AutoDL 会话，不可直接套用其他会话。
+首次新建实验可按原 agent.py init/prepare/run 流程使用本程序，自动使用优化后的 Writer。
+当前已部署会话无需重新解压、初始化或重新运行旧的 api_fix1/api_fix2 升级脚本。
+
+性能数字的范围：服务器局部测试 60 台设备，旧版 5.237 秒 / 1830 次内存扫描，新版 0.457 秒 / 60 次扫描。
+这是缓存入队代码的独立测试；整条预处理和训练流程的加速比以实际日志为准。

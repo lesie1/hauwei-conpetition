@@ -1,0 +1,6 @@
+numpy>=1.26,<3
+pandas>=2.2,<3
+pyarrow>=16,<27
+xgboost>=3.2,<4
+psutil>=5.9
+openpyxl>=3.1

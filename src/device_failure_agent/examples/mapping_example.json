@@ -1,0 +1,10 @@
+{
+  "observations": [{
+    "glob": "observations/*.csv", "id_column": "serial_number", "time_column": "date",
+    "time_unit": "date", "timezone": "UTC", "filters": {},
+    "features": [{"name":"smart_5_raw","column":"smart_5_raw","kind":"counter","unit":"count","description":"Example only: confirm meaning from the actual data documentation"}]
+  }],
+  "failure": {"mode":"indicator","column":"failure","positive_values":["1"],"definition":"Example: documented binary drive failure indicator"},
+  "followup": {"mode":"last_observation","basis":"Conservative follow-up ends at the last recorded observation; disappearance does not imply health"},
+  "description":"FORMAT EXAMPLE ONLY. The feature agent replaces paths and column names using the supplied dataset."
+}
